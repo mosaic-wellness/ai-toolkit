@@ -160,6 +160,81 @@ fastify.get('/beacon/telemetry/stats', async (request, reply) => {
   return { total, days, byCommand, byUser, byProject, daily, recent };
 });
 
+// Feedback submission — POST /feedback {rating, title, description, user, project, ts, sig}
+fastify.post('/feedback', async (request, reply) => {
+  const { rating, title, description, user, project, ts, sig } = request.body || {};
+
+  const ratingInt = Number(rating);
+  if (!Number.isInteger(ratingInt) || ratingInt < 1 || ratingInt > 4) {
+    return reply.code(400).send({ ok: false, error: 'rating must be integer 1-4' });
+  }
+  if (typeof title !== 'string' || !title.trim() || title.length > 200) {
+    return reply.code(400).send({ ok: false, error: 'title required, max 200 chars' });
+  }
+  if (typeof description !== 'string' || !description.trim() || description.length > 2000) {
+    return reply.code(400).send({ ok: false, error: 'description required, max 2000 chars' });
+  }
+  if (!user || !project) {
+    return reply.code(400).send({ ok: false, error: 'user and project required' });
+  }
+
+  if (!verifyHmac(ratingInt, user, project, ts, sig)) {
+    return reply.code(403).send({ ok: false, error: 'invalid signature' });
+  }
+
+  if (!checkRateLimit(request.ip)) {
+    return reply.code(429).send({ ok: false, error: 'rate limited' });
+  }
+
+  await prisma.feedback.create({
+    data: {
+      rating: ratingInt,
+      title: title.trim().slice(0, 200),
+      description: description.trim().slice(0, 2000),
+      userEmail: String(user).slice(0, 255),
+      projectName: String(project).slice(0, 255),
+      ts: new Date(),
+    },
+  });
+
+  return { ok: true };
+});
+
+// Feedback stats — admin only
+fastify.get('/feedback/stats', async (request, reply) => {
+  if (!requireAdmin(request, reply)) return;
+
+  const days = parseInt(request.query.days || '90', 10);
+  const since = new Date(Date.now() - days * 86400000);
+
+  const total = await prisma.feedback.count({ where: { ts: { gte: since } } });
+
+  const avgRow = await prisma.$queryRaw`
+    SELECT AVG(rating)::float as avg
+    FROM beacon_feedback WHERE ts >= ${since}
+  `;
+  const avg = avgRow[0]?.avg ?? null;
+
+  const byRating = await prisma.$queryRaw`
+    SELECT rating, COUNT(*)::int as count
+    FROM beacon_feedback WHERE ts >= ${since}
+    GROUP BY rating ORDER BY rating DESC
+  `;
+
+  const byProject = await prisma.$queryRaw`
+    SELECT project_name, COUNT(*)::int as count, AVG(rating)::float as avg
+    FROM beacon_feedback WHERE ts >= ${since}
+    GROUP BY project_name ORDER BY count DESC
+  `;
+
+  const recent = await prisma.$queryRaw`
+    SELECT id, rating, title, description, user_email, project_name, ts
+    FROM beacon_feedback ORDER BY ts DESC LIMIT 100
+  `;
+
+  return { total, days, avg, byRating, byProject, recent };
+});
+
 fastify.get('/health', async () => ({ status: 'ok' }));
 
 // --- Dashboard (admin only) ---
@@ -168,6 +243,12 @@ fastify.get('/', async (request, reply) => {
   if (!requireAdmin(request, reply)) return;
   reply.type('text/html');
   return reply.send(dashboardHtml);
+});
+
+fastify.get('/feedback', async (request, reply) => {
+  if (!requireAdmin(request, reply)) return;
+  reply.type('text/html');
+  return reply.send(feedbackDashboardHtml);
 });
 
 const dashboardHtml = /* html */ `<!DOCTYPE html>
@@ -211,9 +292,12 @@ const dashboardHtml = /* html */ `<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Beacon Telemetry</h1>
-    <p>Plugin usage across the team</p>
+  <div class="header" style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <div>
+      <h1>Beacon Telemetry</h1>
+      <p>Plugin usage across the team</p>
+    </div>
+    <a id="feedback-link" href="#" style="color:#8b5cf6;text-decoration:none;font-size:13px;">View feedback &rarr;</a>
   </div>
   <div class="controls" id="controls"></div>
   <div class="stats" id="stats"></div>
@@ -226,6 +310,7 @@ const CMD_COLORS = { doctor:'#ef4444', review:'#f59e0b', brainstorm:'#22c55e', g
 let currentDays = 30;
 
 const urlToken = new URLSearchParams(window.location.search).get('token') || '';
+document.getElementById('feedback-link').href = '/feedback?token=' + encodeURIComponent(urlToken);
 
 function esc(str) {
   const d = document.createElement('div');
@@ -389,6 +474,196 @@ async function load(days) {
 
 buildControls();
 load(30);
+</script>
+</body>
+</html>`;
+
+const feedbackDashboardHtml = /* html */ `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beacon Feedback</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e8; min-height: 100vh; }
+  .header { padding: 32px 40px 24px; border-bottom: 1px solid #1a1a2e; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1 { font-size: 20px; font-weight: 600; color: #fff; }
+  .header p { font-size: 13px; color: #666; margin-top: 4px; }
+  .header a { color: #8b5cf6; text-decoration: none; font-size: 13px; }
+  .controls { padding: 16px 40px; display: flex; gap: 8px; }
+  .controls button { padding: 6px 14px; border-radius: 6px; border: 1px solid #1a1a2e; background: transparent; color: #888; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .controls button:hover { border-color: #333; color: #ccc; }
+  .controls button.active { background: #1a1a2e; color: #fff; border-color: #2a2a4e; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; padding: 8px 40px 24px; }
+  .stat-card { background: #111118; border: 1px solid #1a1a2e; border-radius: 10px; padding: 20px; }
+  .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: #fff; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 40px 24px; }
+  .card { background: #111118; border: 1px solid #1a1a2e; border-radius: 10px; padding: 24px; }
+  .card h2 { font-size: 13px; font-weight: 600; color: #888; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .bar-label { font-size: 13px; color: #ccc; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 24px; background: #0a0a0f; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .bar-count { font-size: 13px; color: #666; width: 60px; text-align: right; flex-shrink: 0; }
+  .full-width { grid-column: 1 / -1; }
+  .feedback-item { background: #0f0f18; border: 1px solid #1a1a2e; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .feedback-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .feedback-rating { font-size: 14px; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+  .feedback-title { font-size: 15px; color: #fff; font-weight: 600; margin-bottom: 6px; }
+  .feedback-desc { font-size: 13px; color: #bbb; white-space: pre-wrap; line-height: 1.5; }
+  .feedback-user, .feedback-project, .feedback-time { font-size: 12px; color: #666; }
+  .feedback-user::before { content: '•'; margin-right: 8px; color: #333; }
+  .feedback-project::before { content: '•'; margin-right: 8px; color: #333; }
+  .feedback-time { margin-left: auto; }
+  .empty-msg { color: #444; font-size: 13px; padding: 20px 0; text-align: center; }
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } .header, .controls, .stats, .grid { padding-left: 20px; padding-right: 20px; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Beacon Feedback</h1>
+      <p>What teammates are telling us about mosaic-buddy</p>
+    </div>
+    <a id="telemetry-link" href="#">&larr; Back to telemetry</a>
+  </div>
+  <div class="controls" id="controls"></div>
+  <div class="stats" id="stats"></div>
+  <div class="grid" id="grid"></div>
+
+<script>
+const RATING_LABELS = { 4: 'Loved it', 3: 'Liked it', 2: 'Meh', 1: 'Frustrated' };
+const RATING_COLORS = { 4: '#22c55e', 3: '#84cc16', 2: '#f59e0b', 1: '#ef4444' };
+const COLORS = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#818cf8','#7c3aed'];
+let currentDays = 90;
+
+const urlToken = new URLSearchParams(window.location.search).get('token') || '';
+document.getElementById('telemetry-link').href = '/?token=' + encodeURIComponent(urlToken);
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.textContent;
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k, v]) => {
+    if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k === 'className') e.className = v;
+    else e.setAttribute(k, v);
+  });
+  if (typeof children === 'string') e.textContent = children;
+  else if (Array.isArray(children)) children.forEach(c => { if (c) e.appendChild(c); });
+  else if (children instanceof Node) e.appendChild(children);
+  return e;
+}
+
+function buildControls() {
+  const container = document.getElementById('controls');
+  container.replaceChildren();
+  [7, 30, 90, 365].forEach(d => {
+    const btn = el('button', { 'data-days': d, className: d === currentDays ? 'active' : '' }, d + ' days');
+    btn.addEventListener('click', () => load(d));
+    container.appendChild(btn);
+  });
+}
+
+function statCard(label, value) {
+  return el('div', { className: 'stat-card' }, [
+    el('div', { className: 'label' }, label),
+    el('div', { className: 'value' }, String(value)),
+  ]);
+}
+
+function barRow(label, count, max, color, suffix) {
+  const pct = (count / max * 100).toFixed(1);
+  const fill = el('div', { className: 'bar-fill', style: { width: pct + '%', background: color } });
+  return el('div', { className: 'bar-row' }, [
+    el('span', { className: 'bar-label', title: label }, label),
+    el('div', { className: 'bar-track' }, fill),
+    el('span', { className: 'bar-count' }, (suffix ? count + ' ' + suffix : String(count))),
+  ]);
+}
+
+function card(title, contentEl, extra) {
+  return el('div', { className: 'card' + (extra ? ' ' + extra : '') }, [
+    el('h2', null, title),
+    contentEl,
+  ]);
+}
+
+function emptyMsg(msg) {
+  return el('div', { className: 'empty-msg' }, msg || 'No feedback yet');
+}
+
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+function feedbackItem(r) {
+  const color = RATING_COLORS[r.rating] || '#666';
+  const label = RATING_LABELS[r.rating] || ('Rating ' + r.rating);
+  const rating = el('span', { className: 'feedback-rating', style: { background: color + '22', color: color } }, label);
+  const meta = el('div', { className: 'feedback-meta' }, [
+    rating,
+    el('span', { className: 'feedback-user' }, esc(r.user_email)),
+    el('span', { className: 'feedback-project' }, esc(r.project_name)),
+    el('span', { className: 'feedback-time' }, timeAgo(new Date(r.ts))),
+  ]);
+  return el('div', { className: 'feedback-item' }, [
+    meta,
+    el('div', { className: 'feedback-title' }, esc(r.title)),
+    el('div', { className: 'feedback-desc' }, esc(r.description)),
+  ]);
+}
+
+async function load(days) {
+  currentDays = days;
+  buildControls();
+
+  const res = await fetch('/feedback/stats?days=' + days + '&token=' + encodeURIComponent(urlToken));
+  if (!res.ok) {
+    document.getElementById('stats').replaceChildren(emptyMsg('Unauthorized. Add ?token=YOUR_ADMIN_TOKEN to the URL.'));
+    return;
+  }
+  const d = await res.json();
+
+  const statsEl = document.getElementById('stats');
+  const gridEl = document.getElementById('grid');
+  statsEl.replaceChildren();
+  gridEl.replaceChildren();
+
+  const avgStr = d.avg !== null ? d.avg.toFixed(2) + ' / 4' : '-';
+  [['Total Feedback', d.total], ['Average Rating', avgStr], ['Projects Heard From', d.byProject.length]]
+    .forEach(([l, v]) => statsEl.appendChild(statCard(l, v)));
+
+  const maxR = Math.max(...d.byRating.map(r => r.count), 1);
+  const ratingContent = d.byRating.length
+    ? el('div', null, d.byRating.map(r => barRow(RATING_LABELS[r.rating] || ('Rating ' + r.rating), r.count, maxR, RATING_COLORS[r.rating] || '#6366f1')))
+    : emptyMsg();
+  gridEl.appendChild(card('By Rating', ratingContent));
+
+  const maxP = Math.max(...d.byProject.map(r => r.count), 1);
+  const projContent = d.byProject.length
+    ? el('div', null, d.byProject.map((r, i) => barRow(r.project_name, r.count, maxP, COLORS[i % COLORS.length], r.avg ? '(' + r.avg.toFixed(1) + ')' : '')))
+    : emptyMsg();
+  gridEl.appendChild(card('By Project', projContent));
+
+  const recentContent = d.recent.length
+    ? el('div', null, d.recent.map(feedbackItem))
+    : emptyMsg();
+  gridEl.appendChild(card('Recent Feedback', recentContent, 'full-width'));
+}
+
+buildControls();
+load(90);
 </script>
 </body>
 </html>`;

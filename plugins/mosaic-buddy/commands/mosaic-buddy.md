@@ -8,7 +8,7 @@ description: >
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
-argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | 5x | 10x | recommendations | help]"
+argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | 5x | 10x | recommendations | help]"
 ---
 
 # Mosaic Tech — Command Router
@@ -39,6 +39,9 @@ Parse the user's subcommand from `$ARGUMENTS` and route as follows. Matching is 
 | grillme | grill, "real feedback", roast | Spawn `grillme` agent |
 | document [sub] | doc, docs, write | Spawn `documenter` agent with subcommand |
 | debug | fix, error, broken, troubleshoot | Spawn `debugger` agent |
+| handoff [sessionName] | save, "save session", "summarize for handoff", resume-prep | Handle inline (see Section 6) |
+| sidequest [new \<name\> \| \<name\>] | fork, "branch off", "side quest", "explore tangent" | Handle inline (see Section 8) |
+| feedback | rating, "give feedback", "submit feedback", "rate this" | Handle inline (see Section 7) |
 | 5x [all] | coach, insights, "how am I doing", "quick coaching" | Spawn `coach-lite` agent |
 | 10x [all] | "deep coaching", "full coaching" | Spawn `coach` agent |
 | recommendations | plugins, suggest | Handle inline (see Section 5) |
@@ -103,6 +106,10 @@ Here's everything I can do:
   Would a user actually like this?  /mosaic-buddy ux
   Write it down for me              /mosaic-buddy document [prd|spec|adr|update|refresh]
   Something's broken                /mosaic-buddy debug
+  Save this session for later       /mosaic-buddy handoff [sessionName]
+  Fork this session for a tangent   /mosaic-buddy sidequest new <forkName>
+  Resume a saved sidequest          /mosaic-buddy sidequest <forkName>
+  Share feedback with the team      /mosaic-buddy feedback
   What plugins should I use?        /mosaic-buddy recommendations
 ```
 
@@ -149,6 +156,21 @@ COMMANDS
   Structured debugging — classifies the error, forms hypotheses,
   investigates systematically, documents the fix.
 
+  Save this session for later          /mosaic-buddy handoff [sessionName]
+  Write a durable summary of the current session to
+  work-log/<sessionName>/session-N.md so a fresh Claude can
+  pick up where you left off. Not the same as /compact.
+
+  Fork this session for a tangent      /mosaic-buddy sidequest new <forkName>
+  Resume a saved sidequest             /mosaic-buddy sidequest <forkName>
+  Save a jumping-off point under work-log/<parent>/forks/<forkName>/
+  so a different future session can explore a tangent without
+  disturbing this one. Use `new` to create, just the name to resume.
+
+  Share feedback with the team         /mosaic-buddy feedback
+  Quick three-question form (rating, title, details) that
+  goes straight to the mosaic-buddy dashboard.
+
   Quick coaching scan                   /mosaic-buddy 5x
   Fast, token-efficient coaching report. Preprocessed analysis
   finds superpowers, time sinks, and quick wins.
@@ -167,6 +189,10 @@ EXAMPLES
   /mosaic-buddy brainstorm          Turn an idea into a plan
   /mosaic-buddy document prd        Create a product requirements doc
   /mosaic-buddy debug               Something's broken — let's fix it
+  /mosaic-buddy handoff my-feature  Save the session so it can be resumed
+  /mosaic-buddy sidequest new spike Fork a tangent without disturbing this one
+  /mosaic-buddy sidequest spike     Resume that fork in a new session
+  /mosaic-buddy feedback            Send a rating + note to the dashboard
   /mosaic-buddy 5x                  Quick coaching scan
   /mosaic-buddy 10x                 Deep coaching with full transcripts
 ```
@@ -183,7 +209,45 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/recommended-plugins.md` and present the r
 
 ---
 
-## 6. Sign-Off
+## 6. Handoff (inline)
+
+When subcommand is `handoff`:
+
+1. Load the skill: read `${SKILL:handoff}`.
+2. Any text in `$ARGUMENTS` after the word `handoff` is the proposed `sessionName` — pass it through to the skill's Step 1.
+3. Follow the skill's steps exactly. Do not abridge or substitute steps.
+
+This is a workflow command (writes a file, may touch `.gitignore`), not an informational one — execute the skill's instructions end-to-end rather than just summarising them.
+
+---
+
+## 7. Feedback (inline)
+
+When subcommand is `feedback`:
+
+1. Load the skill: read `${SKILL:feedback}`.
+2. Follow the skill's steps exactly — three asks (rating, title, description), then submit via `hooks/submit-feedback.sh`.
+
+Don't add extra meta-commentary or surveys around it. The skill is short on purpose.
+
+---
+
+## 8. Sidequest (inline)
+
+When subcommand is `sidequest`:
+
+1. Load the skill: read `${SKILL:sidequest}`.
+2. Any text in `$ARGUMENTS` after the word `sidequest` is the skill's input — pass it through to the skill's Step 0 dispatcher:
+   - `new <forkName>` → CREATE mode
+   - `<forkName>` (single arg) → RESUME mode
+   - empty → ask the user via `AskUserQuestion`
+3. Follow the skill's steps exactly. CREATE writes a fork snapshot under `work-log/<parent>/forks/<forkName>/session-1.md`; RESUME reads it and briefs the user.
+
+This is a workflow command (writes a file, may touch `.gitignore`), not an informational one — execute the skill's instructions end-to-end rather than just summarising them.
+
+---
+
+## 9. Sign-Off
 
 For inline responses (help, recommendations, menu), do NOT add a fix-it offer — these are informational.
 

@@ -30,6 +30,10 @@ Then run `/mosaic-buddy` in any project. That's it.
 | "Give it to me straight" | Honest product + code review — good stuff first, then what your VP would notice | `/mosaic-buddy grillme` |
 | "Write it down" | Creates PRDs, tech specs, and decision records | `/mosaic-buddy document` |
 | "Something's broken" | Structured debugging — classify, investigate, fix, document | `/mosaic-buddy debug` |
+| "Save this session for later" | Writes a structured handoff so a fresh Claude can pick up the work | `/mosaic-buddy handoff [name]` |
+| "Fork this session for a tangent" | Saves a jumping-off point so a separate future session can explore it | `/mosaic-buddy sidequest new <name>` |
+| "Resume a saved sidequest" | Loads the fork snapshot, briefs the new session on what to do | `/mosaic-buddy sidequest <name>` |
+| "Tell the team how it's going" | Quick rating + title + details, lands in the mosaic-buddy dashboard | `/mosaic-buddy feedback` |
 | "How am I doing with Claude?" | Coaching report that finds your superpowers and time sinks | `/mosaic-buddy 5x` or `10x` |
 
 Or just run **`/mosaic-buddy`** with no arguments to see an interactive menu.
@@ -71,11 +75,15 @@ Lightweight, anonymous usage tracking helps the team understand adoption. Here's
 | Field | Example |
 |---|---|
 | Command name | `doctor` |
-| Git email | `you@mosaic.com` |
+| Display name (local part of your git email) | `you` (not `you@mosaic.com`) |
 | Repo folder name | `expense-tracker` |
 | Timestamp | `2026-04-21T10:30:00Z` |
 
-**Nothing else.** No file contents, no source code, no API keys, no arguments beyond the command name.
+**Nothing else.** No file contents, no source code, no API keys, no arguments beyond the command name. Each event is HMAC-signed so random sources can't write to the dashboard.
+
+If you use `/mosaic-buddy feedback`, the rating, title, and description you type are sent too — that one is explicit.
+
+**Opt out:** `export MOSAIC_BUDDY_TELEMETRY_URL=off` in your shell. Both auto-telemetry and explicit feedback submission will stop.
 
 ---
 

@@ -20,3 +20,17 @@ model Event {
   @@index([ts])
   @@map("beacon_events")
 }
+
+model Feedback {
+  id          Int      @id @default(autoincrement())
+  rating      Int
+  title       String   @db.VarChar(200)
+  description String   @db.Text
+  userEmail   String   @map("user_email") @db.VarChar(255)
+  projectName String   @map("project_name") @db.VarChar(255)
+  ts          DateTime @default(now())
+
+  @@index([rating])
+  @@index([ts])
+  @@map("beacon_feedback")
+}

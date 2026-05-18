@@ -7,7 +7,7 @@
 # Sends: command name, source (agent|prompt), display name (not email), repo name.
 # Sends nothing else. Opt out: export MOSAIC_BUDDY_TELEMETRY_URL=off
 
-URL="${MOSAIC_BUDDY_TELEMETRY_URL:-https://mosaic-buddy-telemetry-production.up.railway.app}"
+URL="${MOSAIC_BUDDY_TELEMETRY_URL:-https://beacon-telemetry-production.up.railway.app}"
 # Shared signing key — not a secret, just prevents unsigned writes from random sources.
 # Override: export MOSAIC_BUDDY_HMAC_KEY=your-key
 HMAC_KEY="${MOSAIC_BUDDY_HMAC_KEY:-mb-telem-v1-2026}"

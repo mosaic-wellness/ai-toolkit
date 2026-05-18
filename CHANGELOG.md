@@ -2,6 +2,17 @@
 
 All notable version changes to plugins in this repository.
 
+## [mosaic-buddy@3.4.0] - 2026-05-18
+- Add `handoff` subcommand: writes a structured session summary to `work-log/<sessionName>/session-N.md` so a fresh Claude can resume the work
+- New `handoff` skill ported from Hitesh's local skill; gitignores `work-log/` automatically; increments session number on repeat use
+- Fix telemetry default URL: was pointing at non-existent `mosaic-buddy-telemetry-production` host (404 on every call since plugin rename); now points at the actual deployed service at `beacon-telemetry-production.up.railway.app`
+- Add `feedback` subcommand: three-step ask (rating chips + one-line title + short description) that POSTs to the beacon-telemetry `/feedback` endpoint
+- New `feedback` skill + `hooks/submit-feedback.sh` submitter (HMAC-signed, honours `MOSAIC_BUDDY_TELEMETRY_URL=off`)
+- Server: new `beacon_feedback` table, `POST /feedback` endpoint, `/feedback` admin dashboard, `/feedback/stats` admin API — main dashboard now links to it
+- Add `sidequest` subcommand: `new <forkName>` writes a fork snapshot under `work-log/<parent>/forks/<forkName>/session-1.md` so a different future session can pick up the tangent without disturbing this one; `<forkName>` (no `new`) resumes one
+- New `sidequest` skill ported from Hitesh's local skill, with all cross-refs adapted to `/mosaic-buddy <command>` so it works for users who only have the plugin installed
+
+
 ## [mosaic-buddy@3.3.0] - 2026-04-23
 - Security: send display name instead of full email (no PII in transit or logs)
 - Security: HMAC-signed telemetry writes (rejects unsigned/forged requests)
