@@ -1,22 +1,23 @@
 ---
 name: handoff
 description: >
-  Bimodal session handoff skill. `new <sessionName>` writes a structured summary
-  to work-log/<sessionName>/session-N.md so a fresh Claude can resume the work
-  cleanly. `<sessionName>` (no `new`) resumes a prior handoff — reads the latest
-  session-N.md, verifies repo state still matches, and briefs the new session on
-  what to do next. NOT context compaction — these are hand-authored files.
+  One-command session save and resume. `/mosaic-buddy handoff <sessionName>`
+  auto-detects intent from the work-log folder: missing → write a fresh handoff;
+  exists & last written by this session → save another checkpoint; exists &
+  written by a different session → resume (read latest, verify repo, brief).
+  NOT context compaction — these are hand-authored, durable files.
 ---
 
 # Handoff
 
-Two modes, dispatched by the first argument:
+One command, three behaviours — all dispatched automatically based on what's already on disk.
 
-| Invocation                                              | Mode    |
-|---------------------------------------------------------|---------|
-| `/mosaic-buddy handoff new <sessionName>`               | Create  |
-| `/mosaic-buddy handoff <sessionName>`                   | Resume  |
-| `/mosaic-buddy handoff` (no args)                       | Ask the user which mode |
+| Situation                                                                                       | Mode    |
+|-------------------------------------------------------------------------------------------------|---------|
+| `work-log/<sessionName>/` doesn't exist                                                         | Create  |
+| `work-log/<sessionName>/` exists AND latest `session-N.md` was written by THIS Claude Code session | Create (writes `session-(N+1).md`) |
+| `work-log/<sessionName>/` exists AND latest `session-N.md` was written by a DIFFERENT session   | Resume  |
+| `/mosaic-buddy handoff` (no args)                                                               | Ask the user |
 
 The router passes any text after `handoff` as `$ARGUMENTS`. Use that to dispatch (see Step 0).
 
@@ -24,28 +25,72 @@ This is **not** context compaction. CREATE writes a durable summary file; RESUME
 
 ## Step 0: Dispatch
 
-- If the first arg is the literal word `new`:
-  - `MODE=create`, `sessionName` = second arg. If missing, follow CREATE Step 1 to resolve it.
-- Else if exactly one arg is present:
-  - `MODE=resume`, `sessionName` = that arg.
-- Else (no args):
-  - Ask via `AskUserQuestion`: create a new handoff, or resume an existing one? Then proceed accordingly. For "resume", list existing sessions in this project as the options (run `ls "$PROJECT_ROOT/work-log/" 2>/dev/null | grep -v '^forks$'`).
+**Parse the input first.**
 
-**Normalise `sessionName`** against `^[a-z0-9][a-z0-9-]*$`. Lowercase, replace spaces/underscores with `-`, strip other chars. Confirm with the user if normalisation materially changed the input. Forbid the literal name `new` (it would be ambiguous on resume).
+- If `$ARGUMENTS` is empty → follow Step 0a (interactive mode select).
+- Else, strip a leading `new ` if present (backward-compat with 3.5.0 syntax — just treat it as the name). The remaining text is `sessionName`.
+- **Normalise `sessionName`** against `^[a-z0-9][a-z0-9-]*$`: lowercase, replace spaces/underscores with `-`, strip other chars. Confirm with the user if normalisation materially changed the input.
+
+**Then dispatch using the folder state:**
+
+```bash
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+SESSION_DIR="$PROJECT_ROOT/work-log/$SESSION_NAME"
+
+if [ ! -d "$SESSION_DIR" ]; then
+  MODE=create
+else
+  LATEST_N=$(ls "$SESSION_DIR" 2>/dev/null \
+    | grep -E '^session-[0-9]+\.md$' \
+    | sed -E 's/^session-([0-9]+)\.md$/\1/' \
+    | sort -n | tail -1)
+
+  if [ -z "$LATEST_N" ]; then
+    MODE=create
+  else
+    LATEST_FILE="$SESSION_DIR/session-$LATEST_N.md"
+    LATEST_SID=$(grep -m1 '^\*\*Claude Code session id:\*\*' "$LATEST_FILE" 2>/dev/null \
+      | sed -E 's/^\*\*Claude Code session id:\*\* *//' | tr -d '[:space:]')
+
+    if [ -n "$CLAUDE_CODE_SESSION_ID" ] && [ "$LATEST_SID" = "$CLAUDE_CODE_SESSION_ID" ]; then
+      MODE=create   # same Claude Code session as last writer → user is adding another checkpoint
+    else
+      MODE=resume
+    fi
+  fi
+fi
+echo "Dispatched: MODE=$MODE  N_existing=${LATEST_N:-0}"
+```
+
+Tell the user which mode you picked, in one short line — e.g. "No prior handoff found, saving a fresh one." or "Found 2 prior handoffs by a different session — resuming the latest."
+
+### Step 0a: No args — ask the user
+
+Ask via a single `AskUserQuestion`:
+
+- **Question:** "Save the current session, or resume a previous one?"
+- **Header:** "Handoff"
+- **Options:**
+  - "Save current session" → continue to C1 to resolve the name
+  - "Resume a previous session" → list existing sessions as a follow-up question. Run `ls "$PROJECT_ROOT/work-log/" 2>/dev/null | grep -v '^forks$'` for the option list. If `work-log/` doesn't exist or is empty, tell the user "No saved sessions in this project yet — I'll save the current one instead" and continue to C1.
+
+After the user picks, re-enter Step 0 with the resolved arguments.
+
+Forbid the literal name `new` for sessionName — it would be ambiguous with the backward-compat strip rule above.
 
 ---
 
 # CREATE mode
 
-Write a durable summary of the current Claude Code session to **`<projectRoot>/work-log/<sessionName>/session-N.md`** so the work can be resumed cleanly in a new session via `/mosaic-buddy handoff <sessionName>`.
+Write a durable summary of the current Claude Code session to **`<projectRoot>/work-log/<sessionName>/session-N.md`** so the work can be resumed cleanly via `/mosaic-buddy handoff <sessionName>` in a fresh session.
 
-## C1: Resolve `sessionName` (prefer the Claude Code session title)
+## C1: Resolve `sessionName` (when not already given)
 
-The handoff filename should match the Claude Code session's own title (set by `/rename`), so the work-log folder and the session label stay aligned.
+If Step 0 already resolved a name, skip to C2.
 
-**C1a. If the user passed a name after `new`**, use it. Skip to C2.
+Otherwise (came in via Step 0a "Save current session" with no name provided):
 
-**C1b. Otherwise, detect the current session title:**
+**C1a. Detect the current Claude Code session title:**
 
 ```bash
 SESSION_ID="$CLAUDE_CODE_SESSION_ID"
@@ -60,15 +105,15 @@ echo "Detected session title: ${CURRENT_TITLE:-<unnamed>}"
 ```
 
 - If `CURRENT_TITLE` is non-empty → use it as `sessionName`. Tell the user "Using existing session title: `<title>`" and skip to C2.
-- If empty → continue to C1c.
+- If empty → continue to C1b.
 
-**C1c. Session is unnamed. Ask the user (single `AskUserQuestion`):**
+**C1b. Session is unnamed. Ask the user (single `AskUserQuestion`):**
 
 - **Question:** "This Claude Code session isn't named yet. What should we call it?"
 - **Header:** "Session name"
 - **Options (2–3):** sensible kebab-case suggestions derived from the *actual* work this session — not generic placeholders. Always include a "Skip naming" option that uses fallback `unnamed-YYYY-MM-DD` (current date).
 
-**C1d. Tell the user to run `/rename` so the Claude Code title matches:**
+**C1c. Tell the user to run `/rename` so the Claude Code title matches:**
 
 > Run this now so the session title matches the handoff file:
 > ```
@@ -93,7 +138,7 @@ if git -C "$PROJECT_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   fi
 fi
 
-# Find next session number
+# Find next session number (we already computed LATEST_N in Step 0 if the folder existed)
 LAST=$(ls "$SESSION_DIR" 2>/dev/null \
   | grep -E '^session-[0-9]+\.md$' \
   | sed -E 's/^session-([0-9]+)\.md$/\1/' \
@@ -105,7 +150,7 @@ echo "Will write: $TARGET"
 
 **Work-log is always project-local.** Never write into `~/.claude/`, a global path, or a parent directory.
 
-If `work-log/<sessionName>/` already has prior sessions, **read the most recent one first** — your new file should reference what's changed since (closed threads, new decisions) rather than restating everything.
+If the folder already has prior sessions (you'll be writing `session-(N+1).md`), **read the most recent one first** — your new file should reference what's changed since (closed threads, new decisions) rather than restating everything.
 
 Mention any `.gitignore` edit in the C5 report so the user can review it.
 
@@ -128,6 +173,8 @@ Also scan the conversation transcript yourself for:
 ## C4: Write the handoff file
 
 Use this exact template. Be concrete — name files, line numbers, branch names, exact commands. A future agent should be able to act from this file alone without re-deriving anything.
+
+**Critical:** the `**Claude Code session id:**` line must contain the literal value of `$CLAUDE_CODE_SESSION_ID` (no formatting) — Step 0's dispatcher reads it back to detect "same session re-save" vs "different session resume."
 
 ```markdown
 # Session <N> — <sessionName>
@@ -199,12 +246,12 @@ is fine — write "None." rather than deleting the heading.>
 ## C5: Confirm and report
 
 After writing, report to the user in 2–3 lines:
-- The path written: `work-log/<sessionName>/session-N.md`
+- The path written: `work-log/<sessionName>/session-N.md` (mention N — first vs additional checkpoint)
 - One-sentence summary of what was captured
-- How to resume later: `/mosaic-buddy handoff <sessionName>` in a fresh session
+- How to resume later: `/mosaic-buddy handoff <sessionName>` in a fresh session (no `new` keyword)
 - If `.gitignore` was modified in C2, mention it: "Added `work-log/` to `.gitignore`."
 
-If you instructed the user to run `/rename` in C1d and they haven't yet, remind them once.
+If you instructed the user to run `/rename` in C1c and they haven't yet, remind them once.
 
 Do **not** offer to commit the file — the user decides when to commit work-log entries.
 
@@ -212,28 +259,20 @@ Do **not** offer to commit the file — the user decides when to commit work-log
 
 # RESUME mode
 
-Pick up a prior session that was checkpointed via `/mosaic-buddy handoff new <sessionName>`. Read the structured handoff file(s) from `<projectRoot>/work-log/<sessionName>/`, verify the repo state is still consistent, and report the next concrete step.
+Pick up a prior session that was checkpointed via `/mosaic-buddy handoff`. Read the structured handoff file(s) from `<projectRoot>/work-log/<sessionName>/`, verify the repo state is still consistent, and report the next concrete step.
 
-## R1: Locate the handoff files
+## R1: Locate and list the handoff files
 
 ```bash
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 SESSION_DIR="$PROJECT_ROOT/work-log/<sessionName>"
 
-if [ ! -d "$SESSION_DIR" ]; then
-  echo "No such session: $SESSION_DIR"
-  # Optionally list available sessions for the user:
-  ls "$PROJECT_ROOT/work-log/" 2>/dev/null | grep -v '^forks$'
-fi
-
-# List session files sorted numerically
 ls "$SESSION_DIR" 2>/dev/null \
   | grep -E '^session-[0-9]+\.md$' \
   | sort -t- -k2 -n
 ```
 
-- **Zero matches** → tell the user "No handoff named `<sessionName>` in this project" and stop. If `work-log/` doesn't exist at all, say "No handoffs in this project yet."
-- **One or more matches** → proceed to R2.
+Step 0's dispatcher already confirmed the folder exists with at least one matching file, so this should succeed. If it doesn't (folder went missing between dispatch and read), tell the user and stop.
 
 ## R2: Read the handoff files
 
@@ -263,9 +302,9 @@ If anything diverged materially, ask the user to confirm the handoff is still th
 
 ## R4: Optionally suggest renaming this session
 
-If `$CLAUDE_CODE_SESSION_ID` is set and the current session has no `custom-title` record in its jsonl (same check as C1b), gently suggest:
+If `$CLAUDE_CODE_SESSION_ID` is set and the current session has no `custom-title` record in its jsonl (same check as C1a), gently suggest:
 
-> Run `/rename <sessionName>` to label this resumed session so the next `/mosaic-buddy handoff new` keeps everything under the same work-log folder.
+> Run `/rename <sessionName>` to label this resumed session so the next `/mosaic-buddy handoff` call keeps everything under the same work-log folder.
 
 Don't nag if the session is already named — the user may want a distinct label.
 
@@ -298,11 +337,13 @@ Open questions for you:
 
 End with: **"Ready to continue. Want me to start on the next step, or somewhere else?"**
 
+If the user later wants to checkpoint *their own* progress in this session, the next `/mosaic-buddy handoff <sessionName>` call will still resume (the latest file belongs to the original author, not this session). In that case, suggest a slightly different name — e.g. `<sessionName>-pt2` — to start a fresh chain.
+
 ---
 
 ## Rules
 
-1. **Never modify the handoff file during resume** — it's a historical record. Only CREATE mode writes new files.
+1. **Never modify the handoff file during resume** — it's a historical record. Only CREATE mode writes.
 2. **Always verify repo state on resume** before proposing action. Stale handoffs cause confusion.
 3. **Don't dump the full handoff content into chat on resume** — summarise. The user can read the file if they want detail.
 4. **Never fabricate work on create** — if you're unsure whether something was completed, mark it open.
@@ -313,3 +354,4 @@ End with: **"Ready to continue. Want me to start on the next step, or somewhere 
 9. **Don't run `/compact`** — handoff is independent of context compaction.
 10. **Don't write the jsonl `custom-title` record directly** — only `/rename` (run by the user) should do that.
 11. **Don't auto-execute the "next concrete step" on resume** — report it, wait for the user's go-ahead.
+12. **Always tell the user which mode you dispatched into** — one short line so they know whether they just saved or just resumed.

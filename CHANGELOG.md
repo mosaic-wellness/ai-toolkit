@@ -2,6 +2,14 @@
 
 All notable version changes to plugins in this repository.
 
+## [mosaic-buddy@3.6.0] - 2026-05-19
+- Drop the `new` keyword from both `handoff` and `sidequest`. Now you just type the name and the skill auto-detects intent from the work-log folder
+- `handoff <name>` dispatch: folder missing → save fresh; folder exists & latest `session-N.md` was written by THIS Claude Code session → save another checkpoint (auto-increments N); folder exists & latest was written by a DIFFERENT session → resume
+- `sidequest <name>` dispatch: `forks/<name>/` exists anywhere under `work-log/` → resume; doesn't exist → create
+- Backward compat: a leading `new ` is silently stripped, so 3.5.0 muscle memory keeps working
+- BREAKING from 3.5.0: `new` no longer routes to a distinct CREATE mode — it's just stripped and the name is dispatched on. No-arg behaviour unchanged (still asks)
+
+
 ## [mosaic-buddy@3.5.0] - 2026-05-19
 - `handoff` is now bimodal (matches `sidequest`): `new <sessionName>` writes a fresh handoff, `<sessionName>` resumes one — reads the latest `work-log/<sessionName>/session-N.md`, verifies the repo state, briefs the user on what's next
 - Resume logic ported from Hitesh's local `takeover` skill into the handoff skill — single command, two modes

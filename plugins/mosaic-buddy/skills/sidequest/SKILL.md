@@ -2,17 +2,25 @@
 name: sidequest
 description: >
   Fork the current Claude Code session at this moment so divergent work can be
-  picked up later in a separate session, without disturbing the trunk. Writes a
-  snapshot under work-log/<parent>/forks/<forkName>/ that a future Claude can
-  resume via `/mosaic-buddy sidequest <forkName>`. Two modes: `new <forkName>`
-  creates a fork; `<forkName>` resumes one.
+  picked up later in a separate session, without disturbing the trunk. One
+  command, two behaviours auto-detected from the work-log folder: missing →
+  create a new fork snapshot; exists → resume the saved one. Writes/reads
+  work-log/<parent>/forks/<forkName>/session-1.md.
 ---
 
 # Sidequest
 
-A **sidequest** is a checkpoint written at a fork point in the current Claude Code session. The current session (the **parent / trunk**) keeps going as if nothing happened. The sidequest file is a saved jumping-off point that a *different* future Claude Code session can pick up via `/mosaic-buddy sidequest <forkName>`.
+A **sidequest** is a checkpoint written at a fork point in the current Claude Code session. The current session (the **parent / trunk**) keeps going as if nothing happened. The sidequest file is a saved jumping-off point that a *different* future Claude Code session can pick up.
 
 The router passes any text after `sidequest` as `$ARGUMENTS`. Use that to dispatch (see Step 0).
+
+One command, two behaviours — dispatched automatically based on what's already on disk:
+
+| Situation                                                    | Mode    |
+|--------------------------------------------------------------|---------|
+| No `forks/<forkName>/` folder anywhere under `work-log/`     | Create  |
+| `forks/<forkName>/` folder already exists                    | Resume  |
+| `/mosaic-buddy sidequest` (no args)                          | Ask the user |
 
 ## When users create sidequests
 
@@ -23,24 +31,42 @@ Two archetypal triggers — name them in §1 of the snapshot when they apply:
 
 The user picks how to work the sidequest *after* it's created — same branch, fresh branch, or a separate worktree for physical isolation. The sidequest snapshot itself is just a saved jumping-off point. Don't presume an answer; record the starting state and let the resumer choose.
 
-Two modes, dispatched by the first argument:
-
-| Invocation                                       | Mode    |
-|--------------------------------------------------|---------|
-| `/mosaic-buddy sidequest new <forkName>`         | Create  |
-| `/mosaic-buddy sidequest <forkName>`             | Resume  |
-| `/mosaic-buddy sidequest` (no args)              | Ask the user which mode |
-
 ## Step 0: Dispatch
 
-- If the first arg is the literal word `new`:
-  - `MODE=create`, `forkName` = second arg. If missing, ask via `AskUserQuestion` for a kebab-case name (suggest 2–3 names derived from the *actual* exploration the user just described, not generic placeholders).
-- Else if exactly one arg is present:
-  - `MODE=resume`, `forkName` = that arg.
-- Else (no args):
-  - Ask via `AskUserQuestion`: create a new sidequest, or resume an existing one? Then proceed accordingly. For "resume", list existing forks in this project as the options (run `find "$PROJECT_ROOT/work-log" -mindepth 3 -maxdepth 3 -type d -path '*/forks/*'`).
+**Parse the input first.**
 
-**Normalise `forkName`** against `^[a-z0-9][a-z0-9-]*$`. Lowercase, replace spaces/underscores with `-`, strip other chars. Confirm with the user if normalisation materially changed the input. Forbid the literal name `new` (it would be ambiguous on resume).
+- If `$ARGUMENTS` is empty → follow Step 0a (interactive mode select).
+- Else, strip a leading `new ` if present (backward-compat with 3.5.0 syntax — just treat it as the name). The remaining text is `forkName`.
+- **Normalise `forkName`** against `^[a-z0-9][a-z0-9-]*$`: lowercase, replace spaces/underscores with `-`, strip other chars. Confirm with the user if normalisation materially changed the input. Forbid the literal name `new` (it would be ambiguous with the strip rule).
+
+**Then dispatch by searching for the fork folder:**
+
+```bash
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+MATCHES=$(find "$PROJECT_ROOT/work-log" -mindepth 3 -maxdepth 3 -type d \
+  -name "$FORK_NAME" -path '*/forks/*' 2>/dev/null)
+
+if [ -z "$MATCHES" ]; then
+  MODE=create
+else
+  MODE=resume
+fi
+echo "Dispatched: MODE=$MODE"
+```
+
+Tell the user which mode you picked, in one short line — e.g. "No existing fork by that name — creating a new one." or "Found an existing fork — resuming it."
+
+If multiple matches come back (same `forkName` under different parents), list the parents via `AskUserQuestion` and let the user pick which one to resume.
+
+### Step 0a: No args — ask the user
+
+Ask via a single `AskUserQuestion`:
+
+- **Question:** "Create a new sidequest, or resume an existing one?"
+- **Header:** "Sidequest"
+- **Options:**
+  - "Create new" → ask follow-up for a kebab-case name (suggest 2–3 derived from the actual exploration the user just described, not generic placeholders), then enter CREATE mode
+  - "Resume existing" → list current forks as the options (`find "$PROJECT_ROOT/work-log" -mindepth 3 -maxdepth 3 -type d -path '*/forks/*'`), then enter RESUME mode
 
 ---
 
@@ -78,7 +104,9 @@ After resolving `PARENT`, tell the user to run `/rename` so the Claude Code sess
 
 Proceed regardless of whether the user runs it — the fork file uses the resolved `PARENT` either way.
 
-## C2: Refuse collisions
+## C2: Confirm there's no collision
+
+Step 0's dispatcher already verified `forks/<forkName>/` doesn't exist anywhere under `work-log/`. This step is a belt-and-braces re-check in case the user picked a name in Step 0a that happens to collide under the current parent:
 
 ```bash
 FORK_DIR="$PROJECT_ROOT/work-log/$PARENT/forks/$FORK_NAME"
@@ -88,7 +116,7 @@ if [ -d "$FORK_DIR" ]; then
 fi
 ```
 
-If `$FORK_DIR` already exists:
+If `$FORK_DIR` already exists (rare — only possible if dispatch was via Step 0a):
 
 - **Do not overwrite.** Stop.
 - List the parent's existing sidequests (`ls "$PROJECT_ROOT/work-log/$PARENT/forks/"`) so the user can pick a non-colliding name.
@@ -201,7 +229,7 @@ Tell the user in 2–3 lines:
 
 - Path written: `work-log/<parent>/forks/<forkName>/session-1.md`
 - One-sentence summary of the fork's purpose
-- Resume command (run in a **new** Claude Code session): `/mosaic-buddy sidequest <forkName>`
+- Resume command (run in a **new** Claude Code session): `/mosaic-buddy sidequest <forkName>` (no `new` keyword — the skill auto-detects)
 - Reassurance: the trunk session (this one) continues unaffected.
 - If `.gitignore` was modified in C3, mention it.
 
@@ -213,18 +241,12 @@ Do **not** offer to commit the file. The user decides when (and whether) to comm
 
 ## R1: Locate the fork
 
-Names are unique per parent, not globally. Search across all parents:
+Step 0's dispatcher already found the fork(s). If multiple matches existed (same `forkName` under different parents), Step 0 disambiguated via `AskUserQuestion`. By this point you should have a single `$FORK_DIR` and `$PARENT` extracted from the path:
 
 ```bash
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-MATCHES=$(find "$PROJECT_ROOT/work-log" -mindepth 3 -maxdepth 3 -type d \
-  -name "$FORK_NAME" -path '*/forks/*' 2>/dev/null)
-echo "$MATCHES"
+# $FORK_DIR should be set from Step 0's match
+PARENT=$(basename "$(dirname "$(dirname "$FORK_DIR")")")
 ```
-
-- **Zero matches** → tell the user "No sidequest named `<forkName>` in this project" and stop. If `work-log/` doesn't exist at all, say "No sidequests in this project yet."
-- **One match** → use it. Extract `PARENT` from the path.
-- **Multiple matches** (same `forkName` under different parents) → list the parents via `AskUserQuestion` and let the user pick which one to resume.
 
 ## R2: Read the fork snapshot
 
