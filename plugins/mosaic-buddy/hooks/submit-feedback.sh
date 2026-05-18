@@ -33,9 +33,18 @@ if [ -z "$TITLE" ] || [ -z "$DESCRIPTION" ]; then
   exit 1
 fi
 
-EMAIL="$(git config user.email 2>/dev/null || echo unknown)"
-DISPLAY=$(echo "$EMAIL" | cut -d@ -f1)
-PROJECT="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo unknown)"
+EMAIL="$(git config user.email 2>/dev/null || true)"
+DISPLAY="$(echo "$EMAIL" | cut -d@ -f1)"
+[ -z "$DISPLAY" ] && DISPLAY="unknown"
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -n "$REPO_ROOT" ]; then
+  PROJECT="$(basename "$REPO_ROOT")"
+else
+  PROJECT="$(basename "$PWD")"
+fi
+[ -z "$PROJECT" ] && PROJECT="unknown"
+
 TS=$(date +%s)
 
 SIG=$(printf '%s%s%s%s' "$RATING" "$DISPLAY" "$PROJECT" "$TS" \
