@@ -30,7 +30,8 @@ Then run `/mosaic-buddy` in any project. That's it.
 | "Give it to me straight" | Honest product + code review — good stuff first, then what your VP would notice | `/mosaic-buddy grillme` |
 | "Write it down" | Creates PRDs, tech specs, and decision records | `/mosaic-buddy document` |
 | "Something's broken" | Structured debugging — classify, investigate, fix, document | `/mosaic-buddy debug` |
-| "Save this session for later" | Writes a structured handoff so a fresh Claude can pick up the work | `/mosaic-buddy handoff [name]` |
+| "Save this session for later" | Writes a structured handoff so a fresh Claude can pick up the work | `/mosaic-buddy handoff new <name>` |
+| "Resume a saved session" | Reads the latest handoff, checks the repo, briefs the new session | `/mosaic-buddy handoff <name>` |
 | "Fork this session for a tangent" | Saves a jumping-off point so a separate future session can explore it | `/mosaic-buddy sidequest new <name>` |
 | "Resume a saved sidequest" | Loads the fork snapshot, briefs the new session on what to do | `/mosaic-buddy sidequest <name>` |
 | "Tell the team how it's going" | Quick rating + title + details, lands in the mosaic-buddy dashboard | `/mosaic-buddy feedback` |

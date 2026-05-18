@@ -2,6 +2,12 @@
 
 All notable version changes to plugins in this repository.
 
+## [mosaic-buddy@3.5.0] - 2026-05-19
+- `handoff` is now bimodal (matches `sidequest`): `new <sessionName>` writes a fresh handoff, `<sessionName>` resumes one — reads the latest `work-log/<sessionName>/session-N.md`, verifies the repo state, briefs the user on what's next
+- Resume logic ported from Hitesh's local `takeover` skill into the handoff skill — single command, two modes
+- BREAKING: in 3.4.0, `/mosaic-buddy handoff <name>` created a handoff. In 3.5.0 it resumes one. To create, now use `/mosaic-buddy handoff new <name>`
+
+
 ## [mosaic-buddy@3.4.0] - 2026-05-18
 - Add `handoff` subcommand: writes a structured session summary to `work-log/<sessionName>/session-N.md` so a fresh Claude can resume the work
 - New `handoff` skill ported from Hitesh's local skill; gitignores `work-log/` automatically; increments session number on repeat use

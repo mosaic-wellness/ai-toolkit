@@ -39,7 +39,7 @@ Parse the user's subcommand from `$ARGUMENTS` and route as follows. Matching is 
 | grillme | grill, "real feedback", roast | Spawn `grillme` agent |
 | document [sub] | doc, docs, write | Spawn `documenter` agent with subcommand |
 | debug | fix, error, broken, troubleshoot | Spawn `debugger` agent |
-| handoff [sessionName] | save, "save session", "summarize for handoff", resume-prep | Handle inline (see Section 6) |
+| handoff [new \<name\> \| \<name\>] | save, "save session", resume, takeover, "pick up where I left off" | Handle inline (see Section 6) |
 | sidequest [new \<name\> \| \<name\>] | fork, "branch off", "side quest", "explore tangent" | Handle inline (see Section 8) |
 | feedback | rating, "give feedback", "submit feedback", "rate this" | Handle inline (see Section 7) |
 | 5x [all] | coach, insights, "how am I doing", "quick coaching" | Spawn `coach-lite` agent |
@@ -106,7 +106,8 @@ Here's everything I can do:
   Would a user actually like this?  /mosaic-buddy ux
   Write it down for me              /mosaic-buddy document [prd|spec|adr|update|refresh]
   Something's broken                /mosaic-buddy debug
-  Save this session for later       /mosaic-buddy handoff [sessionName]
+  Save this session for later       /mosaic-buddy handoff new <sessionName>
+  Resume a saved session            /mosaic-buddy handoff <sessionName>
   Fork this session for a tangent   /mosaic-buddy sidequest new <forkName>
   Resume a saved sidequest          /mosaic-buddy sidequest <forkName>
   Share feedback with the team      /mosaic-buddy feedback
@@ -156,10 +157,12 @@ COMMANDS
   Structured debugging — classifies the error, forms hypotheses,
   investigates systematically, documents the fix.
 
-  Save this session for later          /mosaic-buddy handoff [sessionName]
-  Write a durable summary of the current session to
+  Save this session for later          /mosaic-buddy handoff new <sessionName>
+  Resume a saved session               /mosaic-buddy handoff <sessionName>
+  Save a structured summary of the current session to
   work-log/<sessionName>/session-N.md so a fresh Claude can
-  pick up where you left off. Not the same as /compact.
+  pick up where you left off. Use `new` to save, just the
+  name to resume. Not the same as /compact.
 
   Fork this session for a tangent      /mosaic-buddy sidequest new <forkName>
   Resume a saved sidequest             /mosaic-buddy sidequest <forkName>
@@ -189,7 +192,8 @@ EXAMPLES
   /mosaic-buddy brainstorm          Turn an idea into a plan
   /mosaic-buddy document prd        Create a product requirements doc
   /mosaic-buddy debug               Something's broken — let's fix it
-  /mosaic-buddy handoff my-feature  Save the session so it can be resumed
+  /mosaic-buddy handoff new my-feat Save the session so it can be resumed
+  /mosaic-buddy handoff my-feat     Resume the saved session in a fresh Claude
   /mosaic-buddy sidequest new spike Fork a tangent without disturbing this one
   /mosaic-buddy sidequest spike     Resume that fork in a new session
   /mosaic-buddy feedback            Send a rating + note to the dashboard
@@ -214,10 +218,13 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/recommended-plugins.md` and present the r
 When subcommand is `handoff`:
 
 1. Load the skill: read `${SKILL:handoff}`.
-2. Any text in `$ARGUMENTS` after the word `handoff` is the proposed `sessionName` — pass it through to the skill's Step 1.
-3. Follow the skill's steps exactly. Do not abridge or substitute steps.
+2. Any text in `$ARGUMENTS` after the word `handoff` is the skill's input — pass it through to the skill's Step 0 dispatcher:
+   - `new <sessionName>` → CREATE mode (writes a new session-N.md)
+   - `<sessionName>` (single arg) → RESUME mode (reads latest session-N.md, briefs the user)
+   - empty → ask the user via `AskUserQuestion`
+3. Follow the skill's steps exactly. CREATE writes a handoff under `work-log/<sessionName>/session-N.md`; RESUME reads it and briefs.
 
-This is a workflow command (writes a file, may touch `.gitignore`), not an informational one — execute the skill's instructions end-to-end rather than just summarising them.
+This is a workflow command (writes or reads files, may touch `.gitignore`), not an informational one — execute the skill's instructions end-to-end rather than just summarising them.
 
 ---
 

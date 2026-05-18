@@ -42,7 +42,7 @@ Every agent in this plugin follows these rules:
 | ai-app-conventions | AI SDK detected or LLM code | Model selection, cost, safety, MCP |
 | ux-heuristics | UX review or frontend discussion | Nielsen's 10, data tables, progressive disclosure |
 | doc-templates | Document command | PRD/spec/ADR templates, mermaid, lifecycle |
-| handoff | `handoff` subcommand | Writes a durable session summary to `work-log/<sessionName>/session-N.md` for resume |
+| handoff | `handoff` subcommand | Bimodal: `new <name>` writes `work-log/<name>/session-N.md`; `<name>` resumes the latest one |
 | sidequest | `sidequest` subcommand | Forks the session at a checkpoint → `work-log/<parent>/forks/<forkName>/session-1.md`; resume in a fresh session |
 | feedback | `feedback` subcommand | Three-step ask (rating, title, description) → POSTs to beacon-telemetry `/feedback` |
 
