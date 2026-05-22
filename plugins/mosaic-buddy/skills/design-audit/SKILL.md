@@ -101,7 +101,7 @@ Keep output tight. Structure as:
 2. [specific thing working well]
 3. [specific thing working well]
 
-**Top 5 Findings**
+**Findings** (list every finding — no cap)
 
 [P1] **Finding title** (Domain)
 Issue → Fix
@@ -116,21 +116,104 @@ Issue → Fix
 - Be SPECIFIC — reference actual elements from the screenshot
 - Be HONEST — 3/5 is fine. Reserve 5 for genuinely excellent work.
 - Each finding: one line for issue, one line for fix. No paragraphs.
-- Max 5 findings total (prioritize P1 > P2 > P3)
+- List **all** findings, ordered P1 → P2 → P3. Do not cap the count — surface every real issue, just keep each one to its two lines.
 
 ### Calculate Overall Score
-Use weights from the brand file. Overall = sum of (score × weight). Grade: A (4.5+), A- (4.0), B+ (3.5), B (3.0), C+ (2.5), C (2.0), D (1.5), F (<1.5).
 
-## Step 4: Generate PDF Scorecard
+Use weights from the brand file. Each brand file lists weights as percentages — convert to decimals (20% → 0.20).
 
-After scoring, generate a **single self-contained HTML file** with the spider chart and scorecard. Use the template at `templates/spider-chart.html` — replace all placeholders with actual scores, summaries, and colors.
+**Overall = Σ (domain score × domain weight)** — the weights sum to 1.0, so the result stays on the 1–5 scale. Round to one decimal.
 
-**Critical PDF layout rules:**
-- Every section (`.cards`, `.section`, `.card`, `.finding`, `.strengths`) MUST have `break-inside: avoid; page-break-inside: avoid;` in its CSS. This prevents Chrome's PDF renderer from splitting elements across pages.
-- The footer MUST NOT be a separate section — include it as the last element inside the findings section, with `margin-top: 20px`. This prevents it from being pushed to a third page alone.
-- The total report MUST fit in exactly 2 pages. Keep padding tight (40px top, 32px sides), use compact margins between sections (16-20px), and keep the chart at 420px max.
+**Grade bands** (the score falls into exactly one range):
 
-Save the HTML as a temp file: `_temp-audit.html` in the user's working directory.
+| Grade | Score range |
+|-------|-------------|
+| A  | 4.5 – 5.0 |
+| A− | 4.0 – 4.49 |
+| B+ | 3.5 – 3.99 |
+| B  | 3.0 – 3.49 |
+| C+ | 2.5 – 2.99 |
+| C  | 2.0 – 2.49 |
+| D  | 1.5 – 1.99 |
+| F  | below 1.5 |
+
+## Step 4: Generate the Report HTML
+
+After scoring, build the report HTML from the template at `templates/spider-chart.html`. The template has a fixed page 1 (header, overall score, spider chart, 8 domain cards) and a page 2 (strengths, then all findings, then footer) that flows onto further pages when there are many findings. **Never restructure the HTML or rewrite the CSS.**
+
+There are two ways to do this. **Use the script — it is faster and avoids mistakes.** Fall back to the manual path only if `python3` is unavailable.
+
+### Path A — fill script (preferred)
+
+Write the audit data to a JSON file, then run the fill script. It computes the overall score, letter grade, every colour, and the card meter bars for you.
+
+1. Write `audit-data.json` in the working directory with this shape:
+
+```json
+{
+  "screen_name": "Shop Page",
+  "brand_name": "Little Joys",
+  "audit_date": "2026-05-22",
+  "domains": [
+    {"name": "Usability & Flow", "weight": 20, "score": 3, "summary": "one line"},
+    {"name": "Visual Design & Craft", "weight": 15, "score": 4, "summary": "one line"},
+    {"name": "Brand Compliance", "weight": 15, "score": 4, "summary": "one line"},
+    {"name": "Content & Communication", "weight": 10, "score": 3, "summary": "one line"},
+    {"name": "Accessibility", "weight": 10, "score": 2, "summary": "one line"},
+    {"name": "Trust & Credibility", "weight": 20, "score": 4, "summary": "one line"},
+    {"name": "Conversion Design", "weight": 5, "score": 3, "summary": "one line"},
+    {"name": "Emotional Design", "weight": 5, "score": 3, "summary": "one line"}
+  ],
+  "strengths": ["strength one", "strength two", "strength three"],
+  "findings": [
+    {"priority": "P1", "title": "...", "domain": "Accessibility", "issue": "...", "fix": "..."}
+  ]
+}
+```
+
+- `domains` must be all 8, in the order above (the chart axes are positional).
+- `weight` is the percentage from the brand file; they sum to 100.
+- `findings` — list **every** finding, ordered P1 → P2 → P3. No cap.
+
+2. Run the script (it lives next to the template):
+
+```bash
+python3 "<skill-dir>/templates/fill.py" audit-data.json _temp-audit.html
+```
+
+### Path B — manual fill (fallback if no python3)
+
+Copy `templates/spider-chart.html` to `_temp-audit.html` and replace the placeholders yourself:
+
+| Placeholder | Replace with |
+|-------------|--------------|
+| `SCREEN_NAME` / `BRAND_NAME` / `AUDIT_DATE` | Screen name, brand, today's date (YYYY-MM-DD) |
+| `OVERALL_SCORE` / `LETTER_GRADE` | Overall score (one decimal) and its grade |
+| `OVERALL_COLOR` | Score colour for the overall score (scale below) |
+| `BRAND_COLOR` | Brand's primary CTA hex — LJ `#009853`, MM/BBW `#005995` |
+| `DOMAIN_n_NAME` / `_WEIGHT` / `_SCORE` / `_SUMMARY` | Per-domain values, 8-domain order |
+| `DOMAIN_n_COLOR` | Score colour for that domain's score |
+| `DOMAIN_n_BAR_1..5` | First *score*-many bars get the domain's score colour; rest stay `#e5e5e5` |
+| `STRENGTH_1..3` | The three strengths |
+
+For findings: the template has **one** `.finding` block between the `FINDINGS_START` / `FINDINGS_END` comments. Duplicate it once per finding, filling `FINDING_PRIORITY` (`P1`/`P2`/`P3`), `FINDING_PILL_CLASS` (`p1`/`p2`/`p3` — lowercase, must match), and `FINDING_TITLE` / `FINDING_DOMAIN` / `FINDING_ISSUE` / `FINDING_FIX`. Keep `.report-footer` as the last element inside the findings section.
+
+**Score colour scale** (for `OVERALL_COLOR`, `DOMAIN_n_COLOR`, filled bars):
+
+| Score | Colour |
+|-------|--------|
+| 4.5 – 5.0 | `#15803d` (green) |
+| 3.5 – 4.49 | `#65a30d` (lime) |
+| 2.5 – 3.49 | `#ca8a04` (amber) |
+| 1.5 – 2.49 | `#ea580c` (orange) |
+| below 1.5 | `#dc2626` (red) |
+
+### Layout rules (baked into the template — don't break them)
+- `.cards`, `.card`, `.strengths`, and each `.finding` keep `break-inside: avoid` so Chrome never splits one of those elements across a page boundary.
+- The footer stays the last element *inside* the findings section, glued there by `break-before: avoid` so it never strands on an empty page.
+- Page 1 is fixed (header + chart + 8 cards). Strengths + all findings start on page 2 and flow onto page 3+ when long. The report is **2 pages or more** — not capped at 2.
+
+Either path leaves the report at `_temp-audit.html` in the user's working directory.
 
 ### Convert to PDF (cross-platform)
 

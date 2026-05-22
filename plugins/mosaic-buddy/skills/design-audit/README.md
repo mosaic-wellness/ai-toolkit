@@ -11,32 +11,30 @@ Upload a mobile screenshot, get a PDF scorecard with spider chart, scores, stren
 1. You share a **mobile screenshot** (or URL)
 2. The skill auto-detects the brand (or asks you to pick one)
 3. Scores across **8 domains** (1-5 scale, weighted per brand)
-4. Outputs a **2-page PDF** with spider chart, score cards, strengths, and top 5 findings
+4. Outputs a **multi-page PDF** with spider chart, score cards, strengths, and all findings
 5. Optionally **deep dive** into specific domains for detailed analysis
 
 ---
 
 ## Installation
 
+This skill ships as part of the **mosaic-buddy** plugin in the
+[`mosaic-wellness/claude-plugins`](https://github.com/mosaic-wellness/claude-plugins) marketplace.
+
 ### Requirements
 - [Claude Code](https://claude.ai/code) (desktop app, CLI, or IDE extension)
 - Claude subscription (Pro or Team)
 - Google Chrome (for PDF generation)
 
-### Method 1: Ask Claude Code (easiest)
-Open Claude Code and type:
+### Install
+In Claude Code, run:
 ```
-Install this skill: https://github.com/rohitmudliyar-mw/product-design-tools/tree/main/skills/design-audit
-```
-
-### Method 2: Terminal command
-Open Claude Code and paste:
-```
-! git clone https://github.com/rohitmudliyar-mw/product-design-tools.git /tmp/pdt && cp -r /tmp/pdt/skills/design-audit ~/.claude/skills/design-audit && rm -rf /tmp/pdt && echo "Installed!"
+/plugin marketplace add mosaic-wellness/claude-plugins
+/plugin install mosaic-buddy
 ```
 
 ### Verify
-Type `/design-audit` in Claude Code. If it loads, you're set.
+Type `/design-audit` in Claude Code, or just share a mobile screenshot and ask for an audit. If the skill responds, you're set.
 
 ---
 
@@ -77,7 +75,8 @@ design-audit/
 │   ├── manmatters.md     # MM brand: Athena tokens, 2 personas, 3D illustration rules
 │   └── bebodywise.md     # BBW brand: colors, 12 personas, Lucide icons, Gambetta font
 └── templates/
-    └── spider-chart.html # HTML template for PDF — spider chart + score cards + findings
+    ├── spider-chart.html # HTML template for the PDF — chart + score cards + findings
+    └── fill.py           # Fills the template from an audit JSON (token-light path)
 ```
 
 ### Flow
@@ -99,17 +98,17 @@ Step 2: Load brand context
 Step 3: Quick Scan
     │  Score all 8 domains (1-5)
     │  One-line summary per domain
-    │  3 strengths + top 5 findings (P1 > P2 > P3)
+    │  3 strengths + all findings (ordered P1 > P2 > P3)
     │
     ▼
 Step 4: Generate PDF
-    │  Build HTML from spider-chart.html template
-    │  Replace placeholders with actual scores/summaries
+    │  Write audit data as JSON, run templates/fill.py
+    │  (falls back to filling the template by hand if no python3)
     │  Convert to PDF via Chrome headless
     │  Falls back to HTML if Chrome not found
     │
     ▼
-Output: 2-page PDF scorecard
+Output: multi-page PDF scorecard
 ```
 
 ### Scoring Engine
@@ -132,7 +131,16 @@ Output: 2-page PDF scorecard
 | P2 | Important — degrades experience noticeably | Fix soon |
 | P3 | Polish — minor improvement | Fix when time allows |
 
-**Overall score** = weighted average of all 8 domain scores. Grade mapping: A (4.5+), A- (4.0), B+ (3.5), B (3.0), C+ (2.5), C (2.0), D (1.5), F (<1.5).
+**Overall score** = weighted average of all 8 domain scores (each domain's 1–5 score × its weight, summed). Rounded to one decimal.
+
+**Grade bands:**
+
+| Grade | Score range | Grade | Score range |
+|-------|-------------|-------|-------------|
+| A  | 4.5 – 5.0  | C+ | 2.5 – 2.99 |
+| A− | 4.0 – 4.49 | C  | 2.0 – 2.49 |
+| B+ | 3.5 – 3.99 | D  | 1.5 – 1.99 |
+| B  | 3.0 – 3.49 | F  | below 1.5  |
 
 ---
 
@@ -226,8 +234,9 @@ Add entries to the **Key Audit Considerations** section at the bottom. These are
 
 ## PDF Output
 
-- Exactly **2 pages**: page 1 = header + score + spider chart + 8 score cards. Page 2 = strengths + findings + footer.
-- All sections use `break-inside: avoid` to prevent mid-element page breaks
+- **Page 1 is fixed**: header + score + spider chart + 8 score cards. Page 2 onward: strengths + all findings + footer.
+- The report is **2 pages or more** — short audits fit in 2, longer ones flow onto page 3+.
+- Cards, strengths, and individual findings use `break-inside: avoid` so no single element splits across a page break
 - Cross-platform Chrome detection: macOS, Linux, Windows
 - Falls back to HTML if Chrome isn't installed (user can Cmd+P to save as PDF)
 - Spider chart uses Canvas 2D rendering — no external dependencies
