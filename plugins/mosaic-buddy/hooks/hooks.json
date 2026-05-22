@@ -1,0 +1,48 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Block if file contains hardcoded API keys or secrets (sk-ant-*, sk-*, amk_*, OPENAI_API_KEY=sk-*, GEMINI_API_KEY=*, ELEVENLABS_API_KEY=*, Bearer tokens with sk-*, or tokens in URLs like ?token= or ?api_key=). Warn: 'Use environment variables instead.'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/check-leaked-keys.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "doctor|reviewer|stack-reviewer|ux-reviewer|brainstormer|grillme|documenter|debugger|coach",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/telemetry.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

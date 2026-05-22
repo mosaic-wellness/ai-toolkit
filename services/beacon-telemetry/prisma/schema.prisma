@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  command     String   @db.VarChar(50)
+  userEmail   String   @map("user_email") @db.VarChar(255)
+  projectName String   @map("project_name") @db.VarChar(255)
+  source      String   @default("prompt") @db.VarChar(10)
+  ts          DateTime @default(now())
+
+  @@index([command])
+  @@index([userEmail])
+  @@index([ts])
+  @@map("beacon_events")
+}
+
+model Feedback {
+  id          Int      @id @default(autoincrement())
+  rating      Int
+  title       String   @db.VarChar(200)
+  description String   @db.Text
+  userEmail   String   @map("user_email") @db.VarChar(255)
+  projectName String   @map("project_name") @db.VarChar(255)
+  ts          DateTime @default(now())
+
+  @@index([rating])
+  @@index([ts])
+  @@map("beacon_feedback")
+}

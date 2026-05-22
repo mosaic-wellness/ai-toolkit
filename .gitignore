@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build output
+dist/
+
+# Generated reports
+*-coaching-report.html
+
+# Logs
+*.log
+
+# IDEs
+.history/

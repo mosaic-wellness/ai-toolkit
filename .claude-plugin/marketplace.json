@@ -8,7 +8,7 @@
     {
       "name": "mosaic-admin",
       "description": "Admin MCP plugin for managing Mosaic Wellness page configs — PDPs, widget pages, experiments, and brand settings via the Zeus admin-mcp server.",
-      "version": "1.0.0",
+      "version": "3.1.0",
       "source": "./plugins/mosaic-admin"
     },
     {
@@ -22,6 +22,12 @@
       "description": "JIRA-driven development orchestrator — takes a ticket and drives it end-to-end: understanding, exploring, planning, building, reviewing, and creating PRs. Works in any repository.",
       "version": "1.0.0",
       "source": "./plugins/kai"
+    },
+    {
+      "name": "mosaic-buddy",
+      "description": "Technical co-pilot for non-engineering teams — health checks, stack review, UX audits, brainstorming, documentation, debugging, and weekly coaching.",
+      "version": "3.6.0",
+      "source": "./plugins/mosaic-buddy"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "name": "mosaic-buddy",
+  "version": "3.6.0",
+  "description": "Technical co-pilot for non-engineering teams — health checks, stack review, UX audits, brainstorming, documentation, debugging, and weekly coaching.",
+  "author": {
+    "name": "Mosaic Wellness",
+    "email": "tech@mosaicwellness.in"
+  },
+  "keywords": [
+    "technical-copilot",
+    "health-check",
+    "stack-review",
+    "ux-audit",
+    "brainstorm",
+    "documentation",
+    "debugging",
+    "coaching",
+    "internal-tools"
+  ],
+  "license": "MIT"
+}
