@@ -39,6 +39,32 @@ Or just run **`/mosaic-buddy`** with no arguments to see an interactive menu.
 
 ---
 
+## Auto-Activating Skills
+
+Some capabilities don't need a command — just describe what you want and Buddy picks the right skill.
+
+### Design Audit (Mosaic brands)
+
+Structured 1–5 scorecard across 8 domains (usability, visual design, brand compliance, content, accessibility, trust, conversion, emotional design) with a PDF report and spider chart for **Little Joys**, **Man Matters**, and **Be Bodywise**.
+
+**How to trigger it** — just share a screenshot, URL, or Figma link and ask for feedback. No command needed. Examples:
+
+- "Audit this PDP screenshot for Man Matters"
+- "Score this Little Joys shop page"
+- "What do you think of this Bodywise checkout flow?"
+- "Brand compliance check on this landing page"
+
+**What you get:**
+1. Brand detection (or a prompt if Buddy can't tell)
+2. Mobile-first review with the correct brand design system, tokens, and personas loaded
+3. 8-domain scorecard (1–5 per domain, weighted by brand)
+4. Findings with severity + fix recommendations
+5. Printable PDF report with a spider chart
+
+**Tip:** mobile screenshots give the most accurate audit. URLs work, but you'll lose some visual precision (exact colors, spacing, contrast).
+
+---
+
 ## Safety Built In
 
 Two hooks run automatically on every project:

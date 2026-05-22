@@ -2,6 +2,13 @@
 
 All notable version changes to plugins in this repository.
 
+## [mosaic-buddy@3.7.0] - 2026-05-22
+- Added `design-audit` skill — structured 1–5 scorecard across 8 domains (usability, visual design, brand compliance, content, accessibility, trust, conversion, emotional design) with a PDF report and spider chart for Little Joys, Man Matters, and Be Bodywise
+- Auto-activates when the user shares a screenshot, URL, or Figma link asking for design feedback — brand-aware, mobile-first, weighted scoring per brand
+- Ships a `fill.py` helper that renders the report from a small JSON, keeping the skill token-light
+- README updated with an Auto-Activating Skills section documenting design-audit triggers and output
+
+
 ## [mosaic-buddy@3.6.0] - 2026-05-19
 - Drop the `new` keyword from both `handoff` and `sidequest`. Now you just type the name and the skill auto-detects intent from the work-log folder
 - `handoff <name>` dispatch: folder missing → save fresh; folder exists & latest `session-N.md` was written by THIS Claude Code session → save another checkpoint (auto-increments N); folder exists & latest was written by a DIFFERENT session → resume
