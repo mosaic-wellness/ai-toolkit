@@ -8,7 +8,7 @@ description: >
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
-argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | 5x | 10x | recommendations | help]"
+argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | 5x | 10x | recommendations | help]"
 ---
 
 # Mosaic Tech — Command Router
@@ -42,6 +42,7 @@ Parse the user's subcommand from `$ARGUMENTS` and route as follows. Matching is 
 | handoff [\<name\>] | save, "save session", resume, takeover, "pick up where I left off" | Handle inline (see Section 6) — auto-detects save vs resume from folder state |
 | sidequest [\<name\>] | fork, "branch off", "side quest", "explore tangent" | Handle inline (see Section 8) — auto-detects create vs resume from folder state |
 | feedback | rating, "give feedback", "submit feedback", "rate this" | Handle inline (see Section 7) |
+| token-usage-guardrails | tokens, "token guardrails", "token efficiency", "optimize tokens" | Handle inline (see Section 9) |
 | 5x [all] | coach, insights, "how am I doing", "quick coaching" | Spawn `coach-lite` agent |
 | 10x [all] | "deep coaching", "full coaching" | Spawn `coach` agent |
 | recommendations | plugins, suggest | Handle inline (see Section 5) |
@@ -109,6 +110,7 @@ Here's everything I can do:
   Save or resume a session          /mosaic-buddy handoff <sessionName>
   Fork or resume a sidequest        /mosaic-buddy sidequest <forkName>
   Share feedback with the team      /mosaic-buddy feedback
+  Set up token guardrails           /mosaic-buddy token-usage-guardrails
   What plugins should I use?        /mosaic-buddy recommendations
 ```
 
@@ -170,6 +172,11 @@ COMMANDS
   Quick three-question form (rating, title, details) that
   goes straight to the mosaic-buddy dashboard.
 
+  Set up token guardrails              /mosaic-buddy token-usage-guardrails
+  Adds a "Token Efficiency & Model Routing" section to the
+  repo's CLAUDE.md, scaffolds .claude/rules/token-efficiency.md,
+  and writes per-package CLAUDE.md stubs in monorepos.
+
   Quick coaching scan                   /mosaic-buddy 5x
   Fast, token-efficient coaching report. Preprocessed analysis
   finds superpowers, time sinks, and quick wins.
@@ -191,6 +198,7 @@ EXAMPLES
   /mosaic-buddy handoff my-feat     Save (or resume) the session — auto-detected
   /mosaic-buddy sidequest spike     Fork (or resume) a sidequest — auto-detected
   /mosaic-buddy feedback            Send a rating + note to the dashboard
+  /mosaic-buddy token-usage-guardrails  Install token-efficiency rules in this repo
   /mosaic-buddy 5x                  Quick coaching scan
   /mosaic-buddy 10x                 Deep coaching with full transcripts
 ```
@@ -242,7 +250,18 @@ This is a workflow command (writes a file, may touch `.gitignore`), not informat
 
 ---
 
-## 9. Sign-Off
+## 9. Token Usage Guardrails (inline)
+
+When subcommand is `token-usage-guardrails`:
+
+1. Load the skill: read `${SKILL:token-usage-guardrails}`.
+2. Execute the skill's steps end-to-end in the user's current project directory.
+
+This is a workflow command that writes files into the user's repo. Follow the skill's safety footer — never overwrite existing `CLAUDE.md` or rule files, only append or skip.
+
+---
+
+## 10. Sign-Off
 
 For inline responses (help, recommendations, menu), do NOT add a fix-it offer — these are informational.
 

@@ -2,6 +2,11 @@
 
 All notable version changes to plugins in this repository.
 
+## [mosaic-buddy@3.7.0] - 2026-05-22
+- Add `token-usage-guardrails` skill and subcommand. One-shot setup that installs a "Token Efficiency & Model Routing" section into the repo's root `CLAUDE.md` (or scaffolds one with a Project Overview + Ownership Map if missing), creates `.claude/agents/` and `.claude/rules/` if absent, writes `.claude/rules/token-efficiency.md`, and adds per-package `CLAUDE.md` stubs for monorepos
+- Idempotent — never overwrites existing `CLAUDE.md` or rule files; only appends or skips
+
+
 ## [mosaic-buddy@3.6.0] - 2026-05-19
 - Drop the `new` keyword from both `handoff` and `sidequest`. Now you just type the name and the skill auto-detects intent from the work-log folder
 - `handoff <name>` dispatch: folder missing → save fresh; folder exists & latest `session-N.md` was written by THIS Claude Code session → save another checkpoint (auto-increments N); folder exists & latest was written by a DIFFERENT session → resume
