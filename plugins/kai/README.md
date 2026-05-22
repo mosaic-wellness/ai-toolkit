@@ -14,7 +14,7 @@ JIRA-driven development orchestrator. Takes a ticket and drives it end-to-end: u
 
 ```bash
 # 1. Add the marketplace (one-time)
-/plugin marketplace add mosaic-wellness/claude-plugins
+/plugin marketplace add mosaic-wellness/ai-toolkit
 
 # 2. Install the plugin
 /plugin install kai
@@ -23,7 +23,7 @@ JIRA-driven development orchestrator. Takes a ticket and drives it end-to-end: u
 ### Via Local Path (development)
 
 ```bash
-claude plugins add /path/to/claude-plugins/plugins/kai
+claude plugins add /path/to/ai-toolkit/plugins/kai
 ```
 
 ## First-Time Setup

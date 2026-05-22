@@ -15,7 +15,7 @@ Claude Code plugins for Mosaic Wellness teams.
 
 ```bash
 # 1. Add the marketplace (one-time)
-/plugin marketplace add mosaic-wellness/claude-plugins
+/plugin marketplace add mosaic-wellness/ai-toolkit
 
 # 2. Install a plugin
 /plugin install mosaic-buddy

@@ -8,7 +8,7 @@
 
 ```bash
 # Add the marketplace (one-time)
-/plugin marketplace add mosaic-wellness/claude-plugins
+/plugin marketplace add mosaic-wellness/ai-toolkit
 
 # Install the plugin
 /plugin install mosaic-buddy
