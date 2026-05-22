@@ -1,0 +1,12 @@
+{
+  "name": "kai",
+  "version": "1.0.0",
+  "description": "JIRA-driven development orchestrator — takes a ticket and drives it end-to-end: understanding, exploring, planning, building, reviewing, and creating PRs. Works in any repository.",
+  "author": {
+    "name": "Mosaic Wellness",
+    "url": "https://github.com/mosaic-wellness"
+  },
+  "repository": "https://github.com/mosaic-wellness/claude-plugins",
+  "license": "MIT",
+  "keywords": ["jira", "development", "orchestrator", "tdd", "code-review", "pr", "automation"]
+}

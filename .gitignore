@@ -17,3 +17,6 @@ dist/
 
 # Logs
 *.log
+
+# IDEs
+.history/
