@@ -45,6 +45,7 @@ Every agent in this plugin follows these rules:
 | handoff | `handoff` subcommand | One command, auto-dispatches save vs resume based on folder + last session-N.md's session ID |
 | sidequest | `sidequest` subcommand | One command, auto-dispatches create vs resume based on whether `forks/<forkName>/` exists |
 | feedback | `feedback` subcommand | Three-step ask (rating, title, description) → POSTs to beacon-telemetry `/feedback` |
+| token-usage-guardrails | `token-usage-guardrails` subcommand | Installs token-efficiency rules into the current repo (CLAUDE.md section, .claude/rules/, per-package stubs). Idempotent. |
 
 ## References
 
