@@ -35,7 +35,7 @@
     ],
     "SubagentStart": [
       {
-        "matcher": "doctor|reviewer|stack-reviewer|ux-reviewer|brainstormer|grillme|documenter|debugger|coach",
+        "matcher": "doctor|reviewer|stack-reviewer|ux-reviewer|brainstormer|grillme|documenter|debugger|coach|coach-lite",
         "hooks": [
           {
             "type": "command",
