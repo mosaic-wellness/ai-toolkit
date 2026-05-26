@@ -7,17 +7,17 @@ Kai takes a JIRA ticket and drives it end-to-end: from understanding the story t
 ## Usage
 
 ```
-/kai:kai <ticket-id>          Full workflow for a JIRA ticket
-/kai:kai help                 Show this help message
-/kai:kai status               Show status of the current kai task
-/kai:kai resume <ticket-id>   Resume a previously started workflow
+/kai-dev:kai-dev <ticket-id>          Full workflow for a JIRA ticket
+/kai-dev:kai-dev help                 Show this help message
+/kai-dev:kai-dev status               Show status of the current kai task
+/kai-dev:kai-dev resume <ticket-id>   Resume a previously started workflow
 ```
 
 ---
 
 ## Workflow Phases
 
-When you run `/kai:kai ENG-1234`, Kai executes these phases:
+When you run `/kai-dev:kai-dev ENG-1234`, Kai executes these phases:
 
 ```
 Phase 1: Setup           Connect to JIRA, fetch ticket, add "kai-agent" label
@@ -79,7 +79,7 @@ Each ticket gets a plan at `plans/{TICKET-ID}/plan.md` tracking:
 - Data shapes and behavioral specs
 - Results (PR link, test counts) after completion
 
-Use `/kai:kai status` to see the current state, or `/kai:kai resume ENG-1234` to pick up where you left off.
+Use `/kai-dev:kai-dev status` to see the current state, or `/kai-dev:kai-dev resume ENG-1234` to pick up where you left off.
 
 ---
 
@@ -97,9 +97,9 @@ Use `/kai:kai status` to see the current state, or `/kai:kai resume ENG-1234` to
 ## Examples
 
 ```
-/kai:kai ENG-1234               Work on ticket ENG-1234
-/kai:kai MOSAIC-567             Work on ticket MOSAIC-567
-/kai:kai resume ENG-1234        Resume where you left off
-/kai:kai status                 Check progress of current task
-/kai:kai help                   Show this message
+/kai-dev:kai-dev ENG-1234               Work on ticket ENG-1234
+/kai-dev:kai-dev MOSAIC-567             Work on ticket MOSAIC-567
+/kai-dev:kai-dev resume ENG-1234        Resume where you left off
+/kai-dev:kai-dev status                 Check progress of current task
+/kai-dev:kai-dev help                   Show this message
 ```
