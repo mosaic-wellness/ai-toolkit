@@ -1,4 +1,4 @@
-# kai-dev — Claude Code Plugin (beta)
+# kai-dev — Claude Code Plugin
 
 JIRA-driven development orchestrator. Takes a ticket and drives it end-to-end: understanding, exploring, planning, building, reviewing, and creating PRs. Works in any repository.
 

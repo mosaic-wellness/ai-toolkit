@@ -1,7 +1,7 @@
 ---
 name: kai-dev
 description: >
-  JIRA-driven development workflow orchestrator (beta). Takes a JIRA ticket, fetches details,
+  JIRA-driven development workflow orchestrator. Takes a JIRA ticket, fetches details,
   explores the current repository, generates an implementation plan, coordinates builder agents
   for execution, runs code review, and creates a PR. Manages the full lifecycle from ticket
   to merged code — works in any repository. Examples: "/kai-dev:kai-dev ENG-1234", "/kai-dev:kai-dev help",

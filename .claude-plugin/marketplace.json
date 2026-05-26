@@ -13,7 +13,7 @@
     },
     {
       "name": "kai-dev",
-      "description": "JIRA-driven development orchestrator (beta) — takes a ticket and drives it end-to-end: understanding, exploring, planning, building, reviewing, and creating PRs. Works in any repository.",
+      "description": "JIRA-driven development orchestrator — takes a ticket and drives it end-to-end: understanding, exploring, planning, building, reviewing, and creating PRs. Works in any repository.",
       "version": "1.0.0",
       "source": "./plugins/kai-dev"
     },

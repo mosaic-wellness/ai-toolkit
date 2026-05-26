@@ -8,7 +8,7 @@ Claude Code plugins for Mosaic Wellness teams.
 |--------|-------------|
 | [mosaic-buddy](./plugins/mosaic-buddy/) | Technical co-pilot — health checks, reviews, brainstorming, docs, debugging, coaching |
 | [mosaic-admin](./plugins/mosaic-admin/) | Admin MCP plugin for managing page configs (PDPs, widget pages, experiments) via Zeus |
-| [kai-dev](./plugins/kai-dev/) | JIRA-driven development orchestrator (beta) — ticket to PR in any repository |
+| [kai-dev](./plugins/kai-dev/) | JIRA-driven development orchestrator — ticket to PR in any repository |
 
 ## Quick Start
 
