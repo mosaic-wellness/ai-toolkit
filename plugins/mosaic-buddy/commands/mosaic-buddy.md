@@ -8,7 +8,7 @@ description: >
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
-argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | 5x | 10x | recommendations | help]"
+argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | tools-init | 5x | 10x | recommendations | help]"
 ---
 
 # Mosaic Tech — Command Router
@@ -43,6 +43,7 @@ Parse the user's subcommand from `$ARGUMENTS` and route as follows. Matching is 
 | sidequest [\<name\>] | fork, "branch off", "side quest", "explore tangent" | Handle inline (see Section 8) — auto-detects create vs resume from folder state |
 | feedback | rating, "give feedback", "submit feedback", "rate this" | Handle inline (see Section 7) |
 | token-usage-guardrails | tokens, "token guardrails", "token efficiency", "optimize tokens" | Handle inline (see Section 9) |
+| tools-init [sub] | tools, "set up tools", "set up mixpanel", "set up firebase", "set up new relic", "configure tokens", "wire mcp" | Handle inline (see Section 10) |
 | 5x [all] | coach, insights, "how am I doing", "quick coaching" | Spawn `coach-lite` agent |
 | 10x [all] | "deep coaching", "full coaching" | Spawn `coach` agent |
 | recommendations | plugins, suggest | Handle inline (see Section 5) |
@@ -177,6 +178,14 @@ COMMANDS
   repo's CLAUDE.md, scaffolds .claude/rules/token-efficiency.md,
   and writes per-package CLAUDE.md stubs in monorepos.
 
+  Wire Mixpanel / Firebase / NR        /mosaic-buddy tools-init [tool]
+  Interactive wizard that walks you through getting Mixpanel
+  Service Account, Firebase login, and New Relic User API keys —
+  validates each by live probe and writes them durably to
+  ~/.config/mosaic-buddy/tokens.env. Subcommands:
+  status | validate | mixpanel | firebase | newrelic |
+  rotate <tool> | remove <tool>.
+
   Quick coaching scan                   /mosaic-buddy 5x
   Fast, token-efficient coaching report. Preprocessed analysis
   finds superpowers, time sinks, and quick wins.
@@ -199,6 +208,9 @@ EXAMPLES
   /mosaic-buddy sidequest spike     Fork (or resume) a sidequest — auto-detected
   /mosaic-buddy feedback            Send a rating + note to the dashboard
   /mosaic-buddy token-usage-guardrails  Install token-efficiency rules in this repo
+  /mosaic-buddy tools-init          Wire Mixpanel/Firebase/NR (interactive)
+  /mosaic-buddy tools-init mixpanel Set up just Mixpanel
+  /mosaic-buddy tools-init status   Show which tools are wired up
   /mosaic-buddy 5x                  Quick coaching scan
   /mosaic-buddy 10x                 Deep coaching with full transcripts
 ```
@@ -261,7 +273,30 @@ This is a workflow command that writes files into the user's repo. Follow the sk
 
 ---
 
-## 10. Sign-Off
+## 10. Tools Init (inline)
+
+When subcommand is `tools-init`:
+
+1. Load the skill: read `${SKILL:tools-init}`.
+2. Pass any remaining text in `$ARGUMENTS` after `tools-init` as the
+   subcommand argument (e.g. `mixpanel`, `firebase`, `newrelic`, `status`,
+   `validate`, `rotate <tool>`, `remove <tool>`). Empty → run the
+   auto-scan + interactive wizard.
+3. Execute the skill's steps end-to-end. This is a workflow command — it
+   reads/writes `~/.config/mosaic-buddy/tokens.env`, may append a one-time
+   line to `~/.zshrc` or `~/.bashrc` (after asking), and probes Mixpanel /
+   New Relic APIs live.
+
+**Safety rails:**
+- NEVER write a token to anywhere other than `~/.config/mosaic-buddy/tokens.env`.
+- NEVER echo a token value back to the user.
+- ALWAYS atomically write (tmp + mv), and chmod 600 the file.
+- For `rotate` / `remove`, confirm with the user before destroying the
+  existing line — these are destructive ops.
+
+---
+
+## 11. Sign-Off
 
 For inline responses (help, recommendations, menu), do NOT add a fix-it offer — these are informational.
 
