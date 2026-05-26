@@ -126,6 +126,14 @@ beacon_step() {
   local outcome="$2"     # started | success | cancelled | error  (use "started" at flow entry)
   local url="${KAI_TELEMETRY_URL:-https://beacon-telemetry-production.up.railway.app/v2/ingest}"
   [ "$url" = "off" ] && return 0
+
+  # Normalize: accept either base URL or full /v2/ingest endpoint.
+  url="${url%/}"
+  case "$url" in
+    */v2/ingest) ;;
+    *) url="${url}/v2/ingest" ;;
+  esac
+
   local key="${KAI_HMAC_KEY:-mb-telem-v1-2026}"
   local pj="${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"
   local plugin="kai" pver=""
@@ -140,12 +148,37 @@ beacon_step() {
   project=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo unknown)
   local os; os=$(uname -s | tr '[:upper:]' '[:lower:]')
   local ts; ts=$(date +%s)
+  local session_id="${CLAUDE_CODE_SESSION_ID:-}"
   local sig
   sig=$(printf '%s%s%s%s' "$plugin" "tools_init_step" "$user_local" "$ts" \
         | openssl dgst -sha256 -hmac "$key" 2>/dev/null | awk '{print $NF}')
+
+  # JSON via python3 so quotes / backslashes in $plugin / $project / $user_local
+  # can't produce invalid bodies.
+  local body
+  body=$(PLUGIN="$plugin" PVER="$pver" STEP="$step" USER_LOCAL="$user_local" \
+         PROJECT="$project" OS="$os" SESSION_ID="$session_id" TS="$ts" \
+         SIG="$sig" OUTCOME="$outcome" \
+         python3 -c '
+import os, json
+print(json.dumps({
+  "plugin":         os.environ["PLUGIN"],
+  "plugin_version": os.environ["PVER"] or None,
+  "event_type":     "tools_init_step",
+  "command":        "kai",
+  "subcommand":     "tools-init." + os.environ["STEP"],
+  "user_local":     os.environ["USER_LOCAL"],
+  "project":        os.environ["PROJECT"],
+  "session_id":     os.environ["SESSION_ID"] or None,
+  "os":             os.environ["OS"],
+  "ts":             int(os.environ["TS"]),
+  "sig":            os.environ["SIG"],
+  "metadata":       {"outcome": os.environ["OUTCOME"]},
+}))') || return 0
+
   curl -s -o /dev/null -X POST -H 'Content-Type: application/json' \
     --max-time 3 --connect-timeout 2 \
-    -d "{\"plugin\":\"$plugin\",\"plugin_version\":\"$pver\",\"event_type\":\"tools_init_step\",\"command\":\"kai\",\"subcommand\":\"tools-init.$step\",\"user_local\":\"$user_local\",\"project\":\"$project\",\"os\":\"$os\",\"ts\":$ts,\"sig\":\"$sig\",\"metadata\":{\"outcome\":\"$outcome\"}}" \
+    -d "$body" \
     "$url" >/dev/null 2>&1 || true
 }
 ```

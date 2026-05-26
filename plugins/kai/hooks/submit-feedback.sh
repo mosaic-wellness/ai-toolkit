@@ -19,8 +19,13 @@ if [ "$URL" = "off" ] || [ -z "$URL" ]; then
   exit 1
 fi
 
-# Derive the feedback endpoint from KAI_TELEMETRY_URL by replacing /v2/ingest → /v2/feedback.
-FEEDBACK_URL="${URL%/v2/ingest}/v2/feedback"
+# Normalize: accept either a service base URL (https://host) or the full
+# /v2/ingest endpoint. Strip trailing slash, drop a trailing /v2/ingest so we
+# have a clean base, then derive both endpoints.
+BASE="${URL%/}"
+BASE="${BASE%/v2/ingest}"
+INGEST_URL="${BASE}/v2/ingest"
+FEEDBACK_URL="${BASE}/v2/feedback"
 
 RATING="${1:-}"
 TITLE="${2:-}"
@@ -112,7 +117,7 @@ print(json.dumps({
   curl -s -o /dev/null -X POST -H "Content-Type: application/json" \
     --connect-timeout 2 --max-time 3 \
     --data "$EVENT_BODY" \
-    "$URL" >/dev/null 2>&1 || true
+    "$INGEST_URL" >/dev/null 2>&1 || true
 
   exit 0
 else

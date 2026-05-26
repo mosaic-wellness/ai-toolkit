@@ -18,6 +18,15 @@ if [ "$URL" = "off" ] || [ -z "$URL" ]; then
   exit 0
 fi
 
+# Normalize URL: accept either a service base URL (https://host) or the full
+# endpoint (.../v2/ingest). Strip trailing slash, then append /v2/ingest if
+# not already present.
+URL="${URL%/}"
+case "$URL" in
+  */v2/ingest) ;;
+  *) URL="${URL}/v2/ingest" ;;
+esac
+
 # Read JSON from stdin
 INPUT=$(cat)
 
