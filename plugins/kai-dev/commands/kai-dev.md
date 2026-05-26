@@ -1,11 +1,11 @@
 ---
-name: kai
+name: kai-dev
 description: >
-  JIRA-driven development workflow orchestrator. Takes a JIRA ticket, fetches details,
+  JIRA-driven development workflow orchestrator (beta). Takes a JIRA ticket, fetches details,
   explores the current repository, generates an implementation plan, coordinates builder agents
   for execution, runs code review, and creates a PR. Manages the full lifecycle from ticket
-  to merged code — works in any repository. Examples: "/kai:kai ENG-1234", "/kai:kai help",
-  "/kai:kai status", "/kai:kai resume ENG-1234".
+  to merged code — works in any repository. Examples: "/kai-dev:kai-dev ENG-1234", "/kai-dev:kai-dev help",
+  "/kai-dev:kai-dev status", "/kai-dev:kai-dev resume ENG-1234".
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Agent, Read, Glob, Grep, Bash, Write, Edit, ToolSearch, AskUserQuestion

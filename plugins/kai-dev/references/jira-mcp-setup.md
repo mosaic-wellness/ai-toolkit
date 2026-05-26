@@ -86,13 +86,13 @@ For Kai plugin usage across multiple projects, global configuration is recommend
 
 ## Verification
 
-After setup, run `/kai:kai` — it will automatically check for JIRA MCP availability using ToolSearch.
+After setup, run `/kai-dev:kai-dev` — it will automatically check for JIRA MCP availability using ToolSearch.
 
 You can also verify manually:
 1. Start a new Claude Code session
 2. The MCP trust dialog should appear for the Atlassian server
 3. Approve it and complete the OAuth flow in your browser
-4. Run `/kai:kai help` to confirm everything works
+4. Run `/kai-dev:kai-dev help` to confirm everything works
 
 ---
 

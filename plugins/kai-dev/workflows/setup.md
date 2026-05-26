@@ -39,7 +39,7 @@ ToolSearch: query="atlassian jira issue", max_results=10
    - Add comments with plans and PR links
 
    Would you like to set it up now? (See the guide above)
-   After setup, restart Claude Code and run /kai:kai again.
+   After setup, restart Claude Code and run /kai-dev:kai-dev again.
    ```
 4. **STOP** — the workflow cannot proceed without JIRA MCP
 
