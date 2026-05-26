@@ -111,7 +111,61 @@ skip the menu and run that tool's flow directly.
 
 ## Step 3 — Per-tool flows
 
+### Telemetry — emit `tools_init_step` at start and end of every flow
+
+Each per-tool flow (mixpanel, firebase, newrelic, validate, rotate, remove)
+must emit a `tools_init_step` event at the start (entering the flow) and at
+completion (exit outcome). This is how `/api/tools_init` builds the funnel.
+
+Use this Bash helper to send the event. It is fire-and-forget — never block
+on it, never surface its output:
+
+```bash
+beacon_step() {
+  local step="$1"        # mixpanel | firebase | newrelic | validate | rotate | remove
+  local outcome="$2"     # started | success | cancelled | error  (use "started" at flow entry)
+  local url="${KAI_TELEMETRY_URL:-https://beacon-telemetry-production.up.railway.app/v2/ingest}"
+  [ "$url" = "off" ] && return 0
+  local key="${KAI_HMAC_KEY:-mb-telem-v1-2026}"
+  local pj="${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"
+  local plugin="kai" pver=""
+  if command -v jq >/dev/null 2>&1 && [ -f "$pj" ]; then
+    plugin=$(jq -r '.name // "kai"' "$pj")
+    pver=$(jq -r '.version // empty' "$pj")
+  fi
+  local user_local
+  user_local=$(git config user.email 2>/dev/null | cut -d@ -f1)
+  : "${user_local:=unknown}"
+  local project
+  project=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo unknown)
+  local os; os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  local ts; ts=$(date +%s)
+  local sig
+  sig=$(printf '%s%s%s%s' "$plugin" "tools_init_step" "$user_local" "$ts" \
+        | openssl dgst -sha256 -hmac "$key" 2>/dev/null | awk '{print $NF}')
+  curl -s -o /dev/null -X POST -H 'Content-Type: application/json' \
+    --max-time 3 --connect-timeout 2 \
+    -d "{\"plugin\":\"$plugin\",\"plugin_version\":\"$pver\",\"event_type\":\"tools_init_step\",\"command\":\"kai\",\"subcommand\":\"tools-init.$step\",\"user_local\":\"$user_local\",\"project\":\"$project\",\"os\":\"$os\",\"ts\":$ts,\"sig\":\"$sig\",\"metadata\":{\"outcome\":\"$outcome\"}}" \
+    "$url" >/dev/null 2>&1 || true
+}
+```
+
+**When to call it (every flow):**
+
+1. **At flow entry** (before any user prompts):  `beacon_step <step> started`
+2. **On success**:                                `beacon_step <step> success`
+3. **On user cancel / abort / "skip"**:           `beacon_step <step> cancelled`
+4. **On validation failure / exception**:        `beacon_step <step> error`
+
+Exactly one terminal outcome per flow (success XOR cancelled XOR error).
+The `started` event is always paired with one terminal event.
+
+If the user picked "Just show me how — don't change anything" from the menu,
+treat that flow as `cancelled` for the relevant step.
+
 ### Mixpanel
+
+**Telemetry — at flow entry:** run `beacon_step mixpanel started`.
 
 1. Print the click-by-click acquisition steps by reading
    `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-mixpanel/references/setup.md` and showing
@@ -143,8 +197,14 @@ skip the menu and run that tool's flow directly.
      "Show MTU for Man Matters last 7 days"
      "What's the PDP → Cart conversion for Little Joys this month?"
    ```
+8. **Telemetry — at flow completion:**
+   - on success (token written + probe green): `beacon_step mixpanel success`
+   - on user cancel / paste-skipped: `beacon_step mixpanel cancelled`
+   - on probe failure / write failure: `beacon_step mixpanel error`
 
 ### Firebase
+
+**Telemetry — at flow entry:** run `beacon_step firebase started`.
 
 For the full walkthrough (which Google account, expected project list),
 read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
@@ -167,8 +227,14 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
      "Show me crash-free users for Bodywise"
      "Which Android apps exist in the Little Joys Firebase project?"
    ```
+8. **Telemetry — at flow completion:**
+   - on success (`firebase login` OK + projects listed): `beacon_step firebase success`
+   - on user cancel / aborted login: `beacon_step firebase cancelled`
+   - on CLI error / no projects visible: `beacon_step firebase error`
 
 ### New Relic
+
+**Telemetry — at flow entry:** run `beacon_step newrelic started`.
 
 1. Print acquisition steps from
    `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-newrelic/references/setup.md`. (Co-located
@@ -192,6 +258,10 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
      "What's the error rate on middleware in the last hour?"
      "Which Mosaic services have alerts firing right now?"
    ```
+7. **Telemetry — at flow completion:**
+   - on success (token written + probe green): `beacon_step newrelic success`
+   - on user cancel: `beacon_step newrelic cancelled`
+   - on probe failure / format check failure: `beacon_step newrelic error`
 
 ---
 
@@ -272,6 +342,28 @@ process needs to spawn fresh so the shell hook runs.)
   Remove the backup line after the new token validates green.
 - **`remove` subcommand**: delete the `<KEY>=` line from `$TOKENS_FILE` and
   tell the user to also revoke the token at the vendor (link).
+
+---
+
+## Telemetry — `validate`, `rotate`, `remove` subcommands
+
+These subcommands are also tracked as `tools_init_step` events. Use the
+`beacon_step` helper from Step 3.
+
+- **`validate`**: at entry `beacon_step validate started`. On all-green
+  `beacon_step validate success`; on at least one probe failing
+  `beacon_step validate error`; on user abort `beacon_step validate cancelled`.
+- **`rotate <tool>`**: at entry `beacon_step rotate started`. On the new
+  token validating green and the backup being cleaned up
+  `beacon_step rotate success`; on probe failure (backup retained)
+  `beacon_step rotate error`; on user abort `beacon_step rotate cancelled`.
+- **`remove <tool>`**: at entry `beacon_step remove started`. On the
+  `<KEY>=` line being removed `beacon_step remove success`; on user abort
+  before write `beacon_step remove cancelled`; on a write failure
+  `beacon_step remove error`.
+
+One terminal outcome per invocation. Never emit two terminal events for the
+same flow.
 
 ---
 

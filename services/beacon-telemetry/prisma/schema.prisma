@@ -8,27 +8,36 @@ datasource db {
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
-  command     String   @db.VarChar(50)
-  userEmail   String   @map("user_email") @db.VarChar(255)
-  projectName String   @map("project_name") @db.VarChar(255)
-  source      String   @default("prompt") @db.VarChar(10)
-  ts          DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  plugin        String   @db.VarChar(32)
+  pluginVersion String?  @map("plugin_version") @db.VarChar(32)
+  eventType     String   @map("event_type") @db.VarChar(32)
+  command       String?  @db.VarChar(32)
+  subcommand    String   @default("") @db.VarChar(80)
+  userLocal     String   @map("user_local") @db.VarChar(64)
+  project       String   @db.VarChar(96)
+  sessionId     String?  @map("session_id") @db.VarChar(64)
+  os            String?  @db.VarChar(16)
+  ts            DateTime @default(now())
+  metadata      Json?
 
-  @@index([command])
-  @@index([userEmail])
+  @@index([plugin])
+  @@index([eventType])
+  @@index([userLocal])
+  @@index([sessionId])
   @@index([ts])
   @@map("beacon_events")
 }
 
 model Feedback {
-  id          Int      @id @default(autoincrement())
-  rating      Int
-  title       String   @db.VarChar(200)
-  description String   @db.Text
-  userEmail   String   @map("user_email") @db.VarChar(255)
-  projectName String   @map("project_name") @db.VarChar(255)
-  ts          DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  rating        Int
+  title         String   @db.VarChar(200)
+  description   String   @db.Text
+  userLocal     String   @map("user_local") @db.VarChar(64)
+  project       String   @db.VarChar(96)
+  pluginVersion String?  @map("plugin_version") @db.VarChar(32)
+  ts            DateTime @default(now())
 
   @@index([rating])
   @@index([ts])
