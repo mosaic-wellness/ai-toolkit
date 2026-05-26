@@ -24,16 +24,18 @@ CHANGELOG.md                      # Version history
 
 ## Plugins
 
-- **mosaic-buddy** — Technical co-pilot for non-engineering teams. Has 10 agents, 4 skills, safety hooks. Command: `/mosaic-buddy`. Each plugin has its own `CLAUDE.md` with detailed rules.
+- **kai** — Successor to mosaic-buddy. Technical co-pilot for non-engineering teams + Mosaic-wide MCP wiring (Mixpanel, Firebase, New Relic, Kai orchestrator) + `tools-init` setup wizard. Has 10 agents, 13 skills, safety hooks. Command: `/kai`.
+- **kai-dev** — JIRA-driven development orchestrator for engineering. Command: `/kai-dev`.
 - **mosaic-admin** — Admin MCP plugin for page config management via Zeus. Command: `/mosaic-admin`.
+- **mosaic-buddy** — *Deprecated.* Original non-engineering co-pilot. Use `kai` instead. Stays in the marketplace for one release cycle for in-flight migrations.
 
 ## Version Management
 
 Versions must stay in sync between `plugins/<name>/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. Use the bump script:
 
 ```bash
-scripts/bump.sh mosaic-buddy patch           # bump + update changelog
-scripts/bump.sh mosaic-buddy minor --commit  # bump + commit
+scripts/bump.sh kai patch           # bump + update changelog
+scripts/bump.sh kai minor --commit  # bump + commit
 ```
 
 Never edit version numbers in JSON files manually.
@@ -50,8 +52,8 @@ A plugin's behavior is defined entirely in markdown files:
 
 ## Key Patterns
 
-- mosaic-buddy's command router (`commands/mosaic-buddy.md`) dispatches to agents based on subcommand. When no args are passed, it must call `AskUserQuestion` immediately — no file scanning.
-- mosaic-buddy has a telemetry hook (`hooks/telemetry.sh`) that fires on `SubagentStart` and `UserPromptSubmit`. The telemetry backend lives in `services/beacon-telemetry/` (separate Fastify+Prisma app deployed on Railway).
+- kai's command router (`commands/kai.md`) dispatches to agents based on subcommand. When no args are passed, it must call `AskUserQuestion` immediately — no file scanning.
+- kai has a telemetry hook (`hooks/telemetry.sh`) that fires on `SubagentStart` and `UserPromptSubmit`. The telemetry backend lives in `services/beacon-telemetry/` (separate Fastify+Prisma app deployed on Railway). Opt-out env var is `KAI_TELEMETRY_URL=off`.
 - Plugin-level `CLAUDE.md` files contain rules all agents in that plugin must follow (tone, vocabulary, approved stack, etc.).
 
 ## Adding a New Plugin

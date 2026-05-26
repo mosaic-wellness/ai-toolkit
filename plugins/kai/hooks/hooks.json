@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Block if file contains hardcoded API keys or secrets (sk-ant-*, sk-*, amk_*, OPENAI_API_KEY=sk-*, GEMINI_API_KEY=*, ELEVENLABS_API_KEY=*, Bearer tokens with sk-*, or tokens in URLs like ?token= or ?api_key=). Warn: 'Use environment variables instead.'"
+            "prompt": "Block if file contains hardcoded API keys or secrets (sk-ant-*, sk-*, amk_*, OPENAI_API_KEY=sk-*, GEMINI_API_KEY=*, ELEVENLABS_API_KEY=*, NRAK-* / NEW_RELIC_API_KEY=NRAK-* (New Relic), NRII-* (New Relic ingest), MIXPANEL_SERVICE_ACCOUNT_TOKEN=<long-hex>, Bearer tokens with sk-*, or tokens in URLs like ?token= or ?api_key=). Warn: 'Use environment variables (e.g. ${NEW_RELIC_API_KEY}) instead — see ${CLAUDE_PLUGIN_ROOT}/skills/tools-init/SKILL.md for the persistent-credentials flow.'"
           }
         ]
       }

@@ -525,7 +525,7 @@ const feedbackDashboardHtml = /* html */ `<!DOCTYPE html>
   <div class="header">
     <div>
       <h1>Beacon Feedback</h1>
-      <p>What teammates are telling us about mosaic-buddy</p>
+      <p>What teammates are telling us about kai</p>
     </div>
     <a id="telemetry-link" href="#">&larr; Back to telemetry</a>
   </div>

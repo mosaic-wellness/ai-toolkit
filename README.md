@@ -6,23 +6,25 @@ Claude Code plugins for Mosaic Wellness teams.
 
 | Plugin | What it does |
 |--------|-------------|
-| [mosaic-buddy](./plugins/mosaic-buddy/) | Technical co-pilot — health checks, reviews, brainstorming, docs, debugging, coaching |
-| [mosaic-admin](./plugins/mosaic-admin/) | Admin MCP plugin for managing page configs (PDPs, widget pages, experiments) via Zeus |
+| [kai](./plugins/kai/) | Technical co-pilot + Mosaic MCP wiring (Mixpanel, Firebase, New Relic, Kai orchestrator). Successor to `mosaic-buddy`. |
 | [kai-dev](./plugins/kai-dev/) | JIRA-driven development orchestrator — ticket to PR in any repository |
+| [mosaic-admin](./plugins/mosaic-admin/) | Admin MCP plugin for managing page configs (PDPs, widget pages, experiments) via Zeus |
+| [mosaic-buddy](./plugins/mosaic-buddy/) | **Deprecated.** Original co-pilot — install [`kai`](./plugins/kai/) instead. |
 
 ## Quick Start
 
 ```bash
 # 1. Add the marketplace (one-time)
-/plugin marketplace add mosaic-wellness/claude-plugins
+/plugin marketplace add mosaic-wellness/ai-toolkit
 
 # 2. Install a plugin
-/plugin install mosaic-buddy
+/plugin install kai
 /plugin install mosaic-admin
 
 # 3. Use it
-/mosaic-buddy              # interactive menu
-/mosaic-buddy doctor       # health check your project
+/kai                       # interactive menu
+/kai doctor                # health check your project
+/kai tools-init            # wire Mixpanel / Firebase / New Relic
 /mosaic-admin              # manage page configs
 ```
 

@@ -10,8 +10,8 @@ set -euo pipefail
 #     (auto-detects plugin if cwd is inside plugins/<name>/)
 #
 # Examples:
-#   scripts/bump.sh mosaic-buddy patch
-#   scripts/bump.sh mosaic-buddy minor --commit
+#   scripts/bump.sh kai patch
+#   scripts/bump.sh kai minor --commit
 #   cd plugins/mosaic-admin && ../../scripts/bump.sh major
 # ──────────────────────────────────────────────────────────
 

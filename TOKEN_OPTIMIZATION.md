@@ -9,7 +9,7 @@ How to keep Claude Code spend in check without sacrificing quality.
 ### User habits (do these every session)
 
 - Start a new chat per task, or run `/clear` before switching tasks.
-- For long sessions, if using the `mosaic-buddy` plugin(recommended)→ use `handoff` / `sidequest`, or use Claude's `/compact` command.
+- For long sessions, if using the `kai` plugin (recommended)→ use `handoff` / `sidequest`, or use Claude's `/compact` command.
 - Edit prior prompts instead of replying with corrections.
 - Convert PDFs/screenshots to text/Markdown before upload.
 
@@ -24,10 +24,10 @@ How to keep Claude Code spend in check without sacrificing quality.
 
 ## One-time optimized setup for your project
 
-**If using the `mosaic-buddy` plugin:** run the `token-usage-guardrails` skill once in your project.
+**If using the `kai` plugin:** run the `token-usage-guardrails` skill once in your project.
 
 ```
-/mosaic-buddy token-usage-guardrails
+/kai token-usage-guardrails
 ```
 
 **Otherwise:** paste the prompt below into Claude Code at the root of any repo.
