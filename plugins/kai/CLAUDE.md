@@ -47,6 +47,7 @@ Every agent in this plugin follows these rules:
 | feedback | `feedback` subcommand | Three-step ask (rating, title, description) → POSTs to beacon-telemetry `/feedback` |
 | token-usage-guardrails | `token-usage-guardrails` subcommand | Installs token-efficiency rules into the current repo (CLAUDE.md section, .claude/rules/, per-package stubs). Idempotent. |
 | tools-init | `tools-init` subcommand | Interactive wizard to mint, validate, and persist Mixpanel / Firebase / New Relic credentials to `~/.config/kai/tokens.env`. Auto-migrates from legacy `~/.config/mosaic-buddy/tokens.env`. Idempotent. |
+| migrate | `migrate` subcommand | One-shot mosaic-buddy → kai switch. Detects legacy `~/.config/mosaic-buddy/` state, copies tokens to the new path, prints the command-mapping table, and tells the user how to uninstall the retired plugin. Idempotent. |
 | mosaic-mixpanel | Mixpanel-related questions about Mosaic brands | Org-wide brand→project resolver, lexicon query script, prod-default + geo rules |
 | mosaic-firebase | Firebase / Crashlytics / Remote Config questions | Brand→Firebase project map, Android/iOS bundle lookup, gotchas |
 | mosaic-newrelic | NRQL / latency / error rate / alert questions | Service entity map, log message schema, Kai-vs-direct-NR routing |

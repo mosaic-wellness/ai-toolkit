@@ -6,10 +6,9 @@ Claude Code plugins for Mosaic Wellness teams.
 
 | Plugin | What it does |
 |--------|-------------|
-| [kai](./plugins/kai/) | Technical co-pilot + Mosaic MCP wiring (Mixpanel, Firebase, New Relic, Kai orchestrator). Successor to `mosaic-buddy`. |
+| [kai](./plugins/kai/) | Technical co-pilot + Mosaic MCP wiring (Mixpanel, Firebase, New Relic, Kai orchestrator). Successor to the retired `mosaic-buddy` plugin — run `/kai migrate` after install if you're switching over. |
 | [kai-dev](./plugins/kai-dev/) | JIRA-driven development orchestrator — ticket to PR in any repository |
 | [mosaic-admin](./plugins/mosaic-admin/) | Admin MCP plugin for managing page configs (PDPs, widget pages, experiments) via Zeus |
-| [mosaic-buddy](./plugins/mosaic-buddy/) | **Deprecated.** Original co-pilot — install [`kai`](./plugins/kai/) instead. |
 
 ## Quick Start
 

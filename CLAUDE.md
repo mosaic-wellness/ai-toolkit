@@ -24,10 +24,10 @@ CHANGELOG.md                      # Version history
 
 ## Plugins
 
-- **kai** — Successor to mosaic-buddy. Technical co-pilot for non-engineering teams + Mosaic-wide MCP wiring (Mixpanel, Firebase, New Relic, Kai orchestrator) + `tools-init` setup wizard. Has 10 agents, 13 skills, safety hooks. Command: `/kai`.
+- **kai** — Successor to mosaic-buddy. Technical co-pilot for non-engineering teams + Mosaic-wide MCP wiring (Mixpanel, Firebase, New Relic, Kai orchestrator) + `tools-init` setup wizard + `migrate` command for users coming from mosaic-buddy. Has 10 agents, 14 skills, safety hooks. Command: `/kai`.
 - **kai-dev** — JIRA-driven development orchestrator for engineering. Command: `/kai-dev`.
 - **mosaic-admin** — Admin MCP plugin for page config management via Zeus. Command: `/mosaic-admin`.
-- **mosaic-buddy** — *Deprecated.* Original non-engineering co-pilot. Use `kai` instead. Stays in the marketplace for one release cycle for in-flight migrations.
+- **mosaic-buddy** — *Retired and removed from the marketplace.* Folder remains under `plugins/mosaic-buddy/` for archival reference. New installs use `kai`; existing installs migrate via `/kai migrate` then `/plugin uninstall mosaic-buddy`.
 
 ## Version Management
 

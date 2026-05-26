@@ -8,7 +8,7 @@ description: >
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
-argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | tools-init | 5x | 10x | recommendations | help]"
+argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | tools-init | migrate | 5x | 10x | recommendations | help]"
 ---
 
 # Kai — Command Router
@@ -44,6 +44,7 @@ Parse the user's subcommand from `$ARGUMENTS` and route as follows. Matching is 
 | feedback | rating, "give feedback", "submit feedback", "rate this" | Handle inline (see Section 7) |
 | token-usage-guardrails | tokens, "token guardrails", "token efficiency", "optimize tokens" | Handle inline (see Section 9) |
 | tools-init [sub] | tools, "set up tools", "set up mixpanel", "set up firebase", "set up new relic", "configure tokens", "wire mcp" | Handle inline (see Section 10) |
+| migrate | "migrate from mosaic-buddy", "coming from mosaic-buddy", "switch to kai", "uninstall mosaic-buddy" | Handle inline (see Section 11) |
 | 5x [all] | coach, insights, "how am I doing", "quick coaching" | Spawn `coach-lite` agent |
 | 10x [all] | "deep coaching", "full coaching" | Spawn `coach` agent |
 | recommendations | plugins, suggest | Handle inline (see Section 5) |
@@ -112,6 +113,8 @@ Here's everything I can do:
   Fork or resume a sidequest        /kai sidequest <forkName>
   Share feedback with the team      /kai feedback
   Set up token guardrails           /kai token-usage-guardrails
+  Wire Mixpanel / Firebase / NR     /kai tools-init
+  Coming from mosaic-buddy?         /kai migrate
   What plugins should I use?        /kai recommendations
 ```
 
@@ -186,6 +189,11 @@ COMMANDS
   status | validate | mixpanel | firebase | newrelic |
   rotate <tool> | remove <tool>.
 
+  Coming from mosaic-buddy?            /kai migrate
+  Copies your tokens to the new ~/.config/kai/ path, prints the
+  command mapping, and tells you how to uninstall the retired
+  mosaic-buddy plugin. Idempotent.
+
   Quick coaching scan                   /kai 5x
   Fast, token-efficient coaching report. Preprocessed analysis
   finds superpowers, time sinks, and quick wins.
@@ -211,6 +219,7 @@ EXAMPLES
   /kai tools-init          Wire Mixpanel/Firebase/NR (interactive)
   /kai tools-init mixpanel Set up just Mixpanel
   /kai tools-init status   Show which tools are wired up
+  /kai migrate             Switch from mosaic-buddy to kai
   /kai 5x                  Quick coaching scan
   /kai 10x                 Deep coaching with full transcripts
 ```
@@ -296,7 +305,28 @@ When subcommand is `tools-init`:
 
 ---
 
-## 11. Sign-Off
+## 11. Migrate (inline)
+
+When subcommand is `migrate`:
+
+1. Load the skill: read `${SKILL:migrate}`.
+2. Execute the skill's steps end-to-end. This is a workflow command — it
+   detects legacy `~/.config/mosaic-buddy/` state, copies tokens to the
+   new path if needed, prints the `/mosaic-buddy → /kai` command mapping,
+   and tells the user how to uninstall the retired plugin.
+
+**Safety rails:**
+- NEVER delete the legacy tokens file or the `~/.config/mosaic-buddy/`
+  directory. The user removes those manually after they confirm kai
+  works end-to-end.
+- NEVER overwrite an existing `~/.config/kai/tokens.env` — if both files
+  exist, surface the conflict and let the user decide.
+- NEVER run `/plugin uninstall mosaic-buddy` programmatically. Tell the
+  user to type it themselves.
+
+---
+
+## 12. Sign-Off
 
 For inline responses (help, recommendations, menu), do NOT add a fix-it offer — these are informational.
 

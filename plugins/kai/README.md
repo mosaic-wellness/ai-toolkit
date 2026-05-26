@@ -16,7 +16,7 @@
 
 Then run `/kai` in any project. That's it.
 
-> **Migrating from `mosaic-buddy`?** Uninstall the old plugin (`/plugin uninstall mosaic-buddy`) and install `kai`. On first `/kai tools-init`, the wizard auto-migrates any tokens from `~/.config/mosaic-buddy/tokens.env` to `~/.config/kai/tokens.env`. Your existing legacy file is left in place — delete it manually once you've confirmed kai is working.
+> **Migrating from `mosaic-buddy`?** After installing kai, run **`/kai migrate`**. It copies your tokens from `~/.config/mosaic-buddy/tokens.env` to `~/.config/kai/tokens.env`, prints the `/mosaic-buddy → /kai` command-mapping table, and tells you the exact `/plugin uninstall mosaic-buddy` step. Idempotent — the legacy file is left in place so you can uninstall on your own schedule.
 
 ---
 
