@@ -1,4 +1,4 @@
-# kai — Claude Code Plugin
+# kai-dev — Claude Code Plugin
 
 JIRA-driven development orchestrator. Takes a ticket and drives it end-to-end: understanding, exploring, planning, building, reviewing, and creating PRs. Works in any repository.
 
@@ -17,26 +17,26 @@ JIRA-driven development orchestrator. Takes a ticket and drives it end-to-end: u
 /plugin marketplace add mosaic-wellness/claude-plugins
 
 # 2. Install the plugin
-/plugin install kai
+/plugin install kai-dev
 ```
 
 ### Via Local Path (development)
 
 ```bash
-claude plugins add /path/to/claude-plugins/plugins/kai
+claude plugins add /path/to/claude-plugins/plugins/kai-dev
 ```
 
 ## First-Time Setup
 
-Run `/kai:kai help` to verify the plugin is loaded. On first use with a ticket, Kai will check for JIRA MCP and guide you through setup if needed.
+Run `/kai-dev:kai-dev help` to verify the plugin is loaded. On first use with a ticket, Kai will check for JIRA MCP and guide you through setup if needed.
 
 ## Usage
 
 ```
-/kai:kai <ticket-id>          Full workflow for a JIRA ticket
-/kai:kai help                 Show usage guide
-/kai:kai status               Show status of the current kai task
-/kai:kai resume <ticket-id>   Resume a previously started workflow
+/kai-dev:kai-dev <ticket-id>          Full workflow for a JIRA ticket
+/kai-dev:kai-dev help                 Show usage guide
+/kai-dev:kai-dev status               Show status of the current kai task
+/kai-dev:kai-dev resume <ticket-id>   Resume a previously started workflow
 ```
 
 ## Workflow Phases
@@ -63,7 +63,7 @@ Phase 8: Finalize        Create PR, update JIRA, present summary
 
 | Type | Name | Purpose |
 |---|---|---|
-| Command | `/kai:kai` | Entry point — JIRA-driven development orchestrator |
+| Command | `/kai-dev:kai-dev` | Entry point — JIRA-driven development orchestrator |
 | Agent | `builder` | TDD builder — discovers and follows project conventions |
 | Agent | `guardian` | Read-only code reviewer — validates quality and acceptance criteria |
 | Agent | `architect` | Scope classifier and spec generator for ad-hoc requests |
@@ -84,7 +84,7 @@ Kai works in any repository by discovering conventions at runtime:
 - **Never force-pushes** — destructive git operations are blocked by hooks
 - **Never proceeds without plan approval** — explicit user confirmation required
 - **Guardian agents are read-only** — Write/Edit tools disabled
-- **Plan documents track progress** — full resumability via `/kai:kai resume`
+- **Plan documents track progress** — full resumability via `/kai-dev:kai-dev resume`
 
 ## Reference Docs
 
