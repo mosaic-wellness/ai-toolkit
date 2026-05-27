@@ -1,6 +1,6 @@
 # Firebase — Auth Setup
 
-The `mosaic-firebase` MCP server uses the **Firebase CLI's own OAuth
+The `firebase-mcp` MCP server uses the **Firebase CLI's own OAuth
 session** — there is no token to paste. The setup is a one-time
 `firebase login` flow.
 
@@ -63,7 +63,7 @@ firebase use <project-id>
 "Switch firebase to be-bodywise"
 ```
 
-The `mosaic-firebase` skill handles the switch automatically when you
+The `firebase-mcp` skill handles the switch automatically when you
 mention a brand.
 
 ---
@@ -74,7 +74,7 @@ Everything your Google account can do in the Firebase console:
 Crashlytics, Firestore, Cloud Functions config, Remote Config, App
 Distribution, Auth user management.
 
-**This is a lot of power.** The `mosaic-firebase` skill confirms before
+**This is a lot of power.** The `firebase-mcp` skill confirms before
 any write operation, and the plugin's `PreToolUse` hook also flags
 risky writes.
 

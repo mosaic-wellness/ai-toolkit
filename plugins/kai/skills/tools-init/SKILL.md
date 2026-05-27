@@ -14,17 +14,17 @@ description: >
 
 # tools-init — Setup Wizard
 
-This skill makes sure kai's four shipped MCP servers (`mosaic-mixpanel`,
-`mosaic-firebase`, `mosaic-newrelic`, `admin-mcp`) are wired up and
+This skill makes sure kai's four shipped MCP servers (`mixpanel-mcp`,
+`firebase-mcp`, `newrelic-mcp`, `admin-mcp`) are wired up and
 reachable. Each server has a different auth model — the wizard's job is
 to detect what's already in place and only prompt for what's actually
 missing.
 
 | MCP | Auth model | Where it's wired |
 |---|---|---|
-| `mosaic-mixpanel` | OAuth via `mcp-remote` | Plugin `.mcp.json` ships the entry. Browser pops on first MCP call. No paste. |
-| `mosaic-firebase` | Firebase CLI auth | Plugin `.mcp.json` ships the entry. `firebase login`. No paste. |
-| `mosaic-newrelic` | User API key (`NRAK-…`) | **User-level `~/.claude.json`.** Wizard pastes the key into `headers["api-key"]` as a literal. |
+| `mixpanel-mcp` | OAuth via `mcp-remote` | Plugin `.mcp.json` ships the entry. Browser pops on first MCP call. No paste. |
+| `firebase-mcp` | Firebase CLI auth | Plugin `.mcp.json` ships the entry. `firebase login`. No paste. |
+| `newrelic-mcp` | User API key (`NRAK-…`) | **User-level `~/.claude.json`.** Wizard pastes the key into `headers["api-key"]` as a literal. |
 | `admin-mcp` | Zeus key (`amk_…`) | **User-level `~/.claude.json`.** Wizard pastes the key into `headers["x-api-key"]` as a literal. |
 
 ### Why newrelic + admin-mcp live in user config (not the plugin)
@@ -119,7 +119,7 @@ if [ -d "$KAI_CACHE_DIR" ] && [ -n "$CURRENT_VERSION" ]; then
       [0-9]*.[0-9]*.[0-9]*)
         # Only rename if the stale dir actually ships an admin-mcp / newrelic
         # entry — older clean caches don't need touching.
-        if [ -f "$dir/.mcp.json" ] && grep -qE '"admin-mcp"|"mosaic-newrelic"' "$dir/.mcp.json"; then
+        if [ -f "$dir/.mcp.json" ] && grep -qE '"admin-mcp"|"newrelic-mcp"|"mosaic-newrelic"' "$dir/.mcp.json"; then
           mv "$dir" "$KAI_CACHE_DIR/_stale-$ver"
           echo "Disabled stale kai cache: $ver → _stale-$ver (was causing MCP duplicate-URL conflicts)."
         fi
@@ -148,9 +148,9 @@ Use `python3 -c '...'` to parse JSON safely (don't pipe through `grep`).
 
 | Tool | Mark ✓ when |
 |---|---|
-| `mosaic-mixpanel` | The plugin's `.mcp.json` ships the entry. Always ✓ — Mixpanel uses OAuth via `mcp-remote`, no further check needed. |
-| `mosaic-firebase` | `command -v firebase` succeeds (CLI handles auth; plugin ships the entry). |
-| `mosaic-newrelic` | `mcpServers.mosaic-newrelic` (or `newrelic`) exists at user level (top-level OR per-project) **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
+| `mixpanel-mcp` | The plugin's `.mcp.json` ships the entry. Always ✓ — Mixpanel uses OAuth via `mcp-remote`, no further check needed. |
+| `firebase-mcp` | `command -v firebase` succeeds (CLI handles auth; plugin ships the entry). |
+| `newrelic-mcp` | `mcpServers.newrelic-mcp` (or `newrelic`) exists at user level (top-level OR per-project) **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
 | `admin-mcp` | `mcpServers.admin-mcp` exists at user level **and** has an `x-api-key` header that is either a literal `amk_…` value, or `${ADMIN_MCP_API_KEY}` with that env var resolved. |
 
 The shell-hook check (`~/.zshrc` / `~/.bashrc` containing the
@@ -166,9 +166,9 @@ reconcile against their own setup:
 ```
 Tool              Status        Source
 ────────────────  ────────────  ─────────────────────────────────
-mosaic-mixpanel   ✓ ready       OAuth (no token; mcp-remote)
-mosaic-firebase   ✓ ready       firebase CLI ($(which firebase))
-mosaic-newrelic   ✗ missing     no api-key header / env var
+mixpanel-mcp   ✓ ready       OAuth (no token; mcp-remote)
+firebase-mcp   ✓ ready       firebase CLI ($(which firebase))
+newrelic-mcp   ✗ missing     no api-key header / env var
 admin-mcp         ✓ ready       inlined amk_… in ~/.claude.json
 ```
 
@@ -293,13 +293,13 @@ Claude Code restart, the user signs into Mixpanel, and `mcp-remote`
 caches the OAuth token in `~/.mcp-auth/`. The wizard's job here is just
 to confirm the entry is wired and tell the user what to expect.
 
-1. Confirm `mcpServers.mosaic-mixpanel` exists either in user-level
+1. Confirm `mcpServers.mixpanel-mcp` exists either in user-level
    `~/.claude.json` (top-level or per-project) or in the plugin's
    `.mcp.json`. If neither, print the suggested entry and offer to add
    it to the top-level `~/.claude.json` for the user:
 
    ```json
-   "mosaic-mixpanel": {
+   "mixpanel-mcp": {
      "type": "stdio",
      "command": "npx",
      "args": ["-y", "mcp-remote", "https://mcp.mixpanel.com/mcp"]
@@ -339,7 +339,7 @@ ignores that env var.
 **Telemetry — at flow entry:** run `beacon_step firebase started`.
 
 For the full walkthrough (which Google account, expected project list),
-read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
+read `${CLAUDE_PLUGIN_ROOT}/skills/firebase-mcp/references/setup.md`.
 
 1. The Firebase MCP uses the CLI's own auth — no token to paste.
 2. Tell the user: this opens a browser-based OAuth flow.
@@ -373,7 +373,7 @@ The wizard's default is to write the MCP entry directly into the user's
 No env-var indirection, no `tokens.env`, no shell hook required.
 
 1. Print acquisition steps from
-   `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-newrelic/references/setup.md`.
+   `${CLAUDE_PLUGIN_ROOT}/skills/newrelic-mcp/references/setup.md`.
 2. Offer to open the browser: `open https://one.newrelic.com/api-keys`.
 3. Ask for the User API key. Format check: must start with `NRAK-` and be
    ≥ 30 chars.
@@ -397,7 +397,7 @@ No env-var indirection, no `tokens.env`, no shell hook required.
 
    TMP=$(mktemp)
    jq --arg key "$NRAK" '
-     .mcpServers["mosaic-newrelic"] = {
+     .mcpServers["newrelic-mcp"] = {
        type: "http",
        url: "https://mcp.newrelic.com/mcp/",
        headers: { "api-key": $key }

@@ -48,9 +48,9 @@ Every agent in this plugin follows these rules:
 | token-usage-guardrails | `token-usage-guardrails` subcommand | Installs token-efficiency rules into the current repo (CLAUDE.md section, .claude/rules/, per-package stubs). Idempotent. |
 | tools-init | `tools-init` subcommand | Interactive wizard for the four shipped MCPs. Mixpanel + Firebase are zero-credential (OAuth / CLI auth). New Relic + admin-mcp keys are written directly into `~/.claude.json` `mcpServers` with literal values — no env-var indirection by default. `~/.config/kai/tokens.env` is kept as a fallback for env-var-based setups. Idempotent. |
 | migrate | `migrate` subcommand | One-shot mosaic-buddy → kai switch. Detects legacy `~/.config/mosaic-buddy/` state, copies tokens to the new path, prints the command-mapping table, and tells the user how to uninstall the retired plugin. Idempotent. |
-| mosaic-mixpanel | Mixpanel-related questions about Mosaic brands | Org-wide brand→project resolver, lexicon query script, prod-default + geo rules |
-| mosaic-firebase | Firebase / Crashlytics / Remote Config questions | Brand→Firebase project map, Android/iOS bundle lookup, gotchas |
-| mosaic-newrelic | NRQL / latency / error rate / alert questions | Service entity map, log message schema, Kai-vs-direct-NR routing |
+| mixpanel-mcp | Mixpanel-related questions about Mosaic brands | Org-wide brand→project resolver, lexicon query script, prod-default + geo rules |
+| firebase-mcp | Firebase / Crashlytics / Remote Config questions | Brand→Firebase project map, Android/iOS bundle lookup, gotchas |
+| newrelic-mcp | NRQL / latency / error rate / alert questions | Service entity map, log message schema, Kai-vs-direct-NR routing |
 | mosaic-meta-ads | Meta / Facebook / Instagram Ads questions (read-only) | Mosaic business + ad-account map, custom-connector setup, write-tool refusal policy. Companion PreToolUse hook (`block-meta-writes.sh`) hard-blocks create/update/activate. |
 | kai-mcp | Operational data — orders, users, CS, deployments, internal policies | 8-category routing for the Kai orchestrator MCP, brand-code mapping (MM/MW/BW/LJ/AS-IN) |
 

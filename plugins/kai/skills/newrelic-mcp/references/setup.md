@@ -1,6 +1,6 @@
 # New Relic — Token Setup
 
-The `mosaic-newrelic` MCP server uses a **User API key** (prefix `NRAK-`).
+The `newrelic-mcp` MCP server uses a **User API key** (prefix `NRAK-`).
 You mint one in the NR UI and paste it via
 `/kai tools-init newrelic`.
 
@@ -64,7 +64,7 @@ read-only analytics work, the typical user role (Standard / Read-only)
 is enough. For mutating things (creating alerts, modifying dashboards),
 you need a higher role.
 
-The `mosaic-newrelic` skill defaults to read-only operations.
+The `newrelic-mcp` skill defaults to read-only operations.
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: mosaic-mixpanel
+name: mixpanel-mcp
 description: >
   Use this skill for any Mixpanel question about Mosaic Wellness brands —
   MTU, funnels (PDP/cart/checkout/purchase), retention, cohorts, event

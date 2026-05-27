@@ -101,8 +101,8 @@ the user types one code and the Meta data uses another.
 | Little Joys UAE | "Little Joys UAE MWL" | `lj` UAE | `LJ-UAE` | `middle-east-a7a72` |
 | Little Joys KSA | "Little Joys - KSA" | (—) | `LJ-KSA` | (—) |
 
-Cross-reference with `plugins/kai/skills/mosaic-mixpanel/SKILL.md` (the
-"3 codes, same brand" table) and `mosaic-firebase/SKILL.md` (brand →
+Cross-reference with `plugins/kai/skills/mixpanel-mcp/SKILL.md` (the
+"3 codes, same brand" table) and `firebase-mcp/SKILL.md` (brand →
 Firebase project map) when stitching cross-platform answers.
 
 ---

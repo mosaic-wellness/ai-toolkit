@@ -1,6 +1,6 @@
 # Mixpanel — Token Setup
 
-The `mosaic-mixpanel` MCP server uses a **Mixpanel Service Account token**.
+The `mixpanel-mcp` MCP server uses a **Mixpanel Service Account token**.
 You'll mint one on the Mixpanel org and paste it via
 `/kai tools-init mixpanel`.
 

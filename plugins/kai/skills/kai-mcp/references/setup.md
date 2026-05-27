@@ -102,7 +102,7 @@ brand.
 ## Brand codes
 
 Kai uses its own brand codes — they are NOT the same as the Mixpanel
-nicknames the `mosaic-mixpanel` skill uses:
+nicknames the `mixpanel-mcp` skill uses:
 
 | Kai code  | Brand              |
 |-----------|--------------------|

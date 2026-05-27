@@ -1,5 +1,5 @@
 ---
-name: mosaic-firebase
+name: firebase-mcp
 description: >
   Use this skill for any Firebase-platform question on Mosaic Wellness
   mobile/web apps — Crashlytics crashes, Firestore queries, Cloud
@@ -9,7 +9,7 @@ description: >
   notifications, FCM, Android/iOS bundle, `firebase` CLI. Covers Man
   Matters, Bodywise, Little Joys, Absolute Sciences, Only Whats Needed,
   MediConnect/DocHub. For non-Firebase mobile concerns route to
-  mosaic-mixpanel or kai-mcp.
+  mixpanel-mcp or kai-mcp.
 ---
 
 # Mosaic × Firebase
