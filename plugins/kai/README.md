@@ -7,31 +7,39 @@
 ## Get Started
 
 ```bash
-# Add the marketplace (one-time)
+# 1. Add the marketplace (one-time)
 /plugin marketplace add mosaic-wellness/ai-toolkit
 
-# Install the plugin
+# 2. Install the plugin
 /plugin install kai
+
+# 3. Provision credentials for Mixpanel / Firebase / New Relic
+/kai tools-init
 ```
 
-Then run `/kai` in any project. That's it.
+`/kai tools-init` is the first command you should run. It walks you through getting and validating tokens for each MCP server kai ships with, then writes them to `~/.config/kai/tokens.env` so every future Claude Code session picks them up automatically. Skip it and the Mixpanel / Firebase / New Relic calls will silently fail. It's idempotent — safe to re-run any time.
+
+After that, run `/kai` in any project for the day-to-day commands (audits, reviews, debugging, brainstorming, docs, coaching). With no arguments, it shows an interactive menu.
+
+> **Meta / Facebook Ads MCP?** That one doesn't go through `tools-init` — Meta's auth runs through Claude Desktop's Custom Connector flow. See [skills/mosaic-meta-ads/references/setup.md](skills/mosaic-meta-ads/references/setup.md).
 
 > **Migrating from `mosaic-buddy`?** After installing kai, run **`/kai migrate`**. It copies your tokens from `~/.config/mosaic-buddy/tokens.env` to `~/.config/kai/tokens.env`, prints the `/mosaic-buddy → /kai` command-mapping table, and tells you the exact `/plugin uninstall mosaic-buddy` step. Idempotent — the legacy file is left in place so you can uninstall on your own schedule.
 
 ---
 
-## Mosaic MCPs (ships built-in)
+## Mosaic MCPs
 
-Kai wires four MCPs the moment you install it. Run `/kai tools-init` to provision credentials.
+Four MCPs ship wired in `.mcp.json` and are provisioned via `/kai tools-init`. A fifth (Meta Ads) is set up separately through Claude Desktop because Meta's OAuth doesn't work via JSON config.
 
-| MCP             | What it gives you                              | Auth                               |
-| --------------- | ---------------------------------------------- | ---------------------------------- |
-| mosaic-mixpanel | Org-wide Mixpanel events, funnels, retention   | Mixpanel Service Account token     |
-| mosaic-firebase | Firebase Crashlytics, Firestore, Remote Config | `firebase login` OAuth             |
-| kai-mcp         | Mosaic Kai orchestrator (CX, eng, analytics)   | Google OAuth on first call         |
-| mosaic-newrelic | NRQL, error logs, alerts                       | New Relic User API key             |
+| MCP             | What it gives you                                       | Setup                                                                  |
+| --------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| mosaic-mixpanel | Org-wide Mixpanel events, funnels, retention            | `/kai tools-init` (Mixpanel Service Account token)                     |
+| mosaic-firebase | Firebase Crashlytics, Firestore, Remote Config          | `/kai tools-init` (runs `firebase login` OAuth)                        |
+| kai-mcp         | Mosaic Kai orchestrator (CX, eng, analytics)            | Auto — Google OAuth on first call                                      |
+| mosaic-newrelic | NRQL, error logs, alerts                                | `/kai tools-init` (New Relic User API key)                             |
+| Meta Ads (read-only) | Campaign / adset / ad performance, audiences, benchmarks | Claude Desktop → Settings → Connectors → Custom Connector. See [setup](skills/mosaic-meta-ads/references/setup.md). kai blocks all Meta write tools at the hook layer. |
 
-Token storage: `~/.config/kai/tokens.env` (chmod 600, plugin updates never overwrite it).
+Token storage for the first four: `~/.config/kai/tokens.env` (chmod 600, plugin updates never overwrite it). Meta tokens are stored by Claude Desktop, not on disk.
 
 ---
 
