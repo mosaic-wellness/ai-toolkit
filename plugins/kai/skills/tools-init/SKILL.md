@@ -149,7 +149,7 @@ Use `python3 -c '...'` to parse JSON safely (don't pipe through `grep`).
 | Tool | Mark ✓ when |
 |---|---|
 | `mixpanel-mcp` | The plugin's `.mcp.json` ships the entry. Always ✓ — Mixpanel uses OAuth via `mcp-remote`, no further check needed. |
-| `firebase-mcp` | `command -v firebase` succeeds (CLI handles auth; plugin ships the entry). |
+| `firebase-mcp` | `~/.config/configstore/firebase-tools.json` exists **and** contains a `tokens.refresh_token` (Firebase auth has been done). The MCP server itself runs via `npx -y firebase-tools@latest mcp` — no global CLI install required. A global `firebase` in `$PATH` is also accepted as a positive signal. |
 | `newrelic-mcp` | `mcpServers.newrelic-mcp` (or `newrelic`) exists at user level (top-level OR per-project) **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
 | `admin-mcp` | `mcpServers.admin-mcp` exists at user level **and** has an `x-api-key` header that is either a literal `amk_…` value, or `${ADMIN_MCP_API_KEY}` with that env var resolved. |
 
@@ -167,7 +167,7 @@ reconcile against their own setup:
 Tool              Status        Source
 ────────────────  ────────────  ─────────────────────────────────
 mixpanel-mcp   ✓ ready       OAuth (no token; mcp-remote)
-firebase-mcp   ✓ ready       firebase CLI ($(which firebase))
+firebase-mcp   ✓ ready       Firebase auth (~/.config/configstore/firebase-tools.json)
 newrelic-mcp   ✗ missing     no api-key header / env var
 admin-mcp         ✓ ready       inlined amk_… in ~/.claude.json
 ```
@@ -342,9 +342,17 @@ For the full walkthrough (which Google account, expected project list),
 read `${CLAUDE_PLUGIN_ROOT}/skills/firebase-mcp/references/setup.md`.
 
 1. The Firebase MCP uses the CLI's own auth — no token to paste.
+   **No global install required.** The plugin's `.mcp.json` ships `npx -y
+   firebase-tools@latest mcp`, so the MCP server downloads firebase-tools
+   transparently. Login can also be done via `npx`, keeping the user's
+   global toolchain clean.
 2. Tell the user: this opens a browser-based OAuth flow.
-3. Run `firebase login` via Bash. If the user is already logged in,
-   `firebase login --reauth` to refresh.
+3. Run `npx -y firebase-tools@latest login` via Bash. If the user is
+   already logged in (auth file exists), run
+   `npx -y firebase-tools@latest login --reauth` to refresh.
+   Users who already have `firebase` globally installed can use
+   `firebase login` directly — both write to the same
+   `~/.config/configstore/firebase-tools.json`.
 4. **Live probe**: after login, the Firebase MCP's `firebase_get_environment`
    should return a non-empty `Authenticated User`.
 5. **Verify org access**: call `firebase_list_projects` and confirm at

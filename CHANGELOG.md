@@ -2,6 +2,11 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.5.1] - 2026-05-27
+- Fix `tools-init` falsely reporting `firebase-mcp` as "missing" when the user has authenticated but doesn't have `firebase-tools` globally installed. Detection now checks `~/.config/configstore/firebase-tools.json` for a refresh token instead of `command -v firebase`. The plugin's `.mcp.json` ships `npx -y firebase-tools@latest mcp`, so a global install was never required — only auth was.
+- Update Firebase setup flow + reference to use `npx -y firebase-tools@latest login` as the default, with `firebase login` shown as the shortcut for users who already have the CLI globally. Same auth file, same OAuth flow, no PATH pollution.
+
+
 ## [kai@1.5.0] - 2026-05-27
 - **Breaking: standardized MCP server names to `<service>-mcp` convention.** `mosaic-mixpanel` → `mixpanel-mcp`, `mosaic-firebase` → `firebase-mcp`, `mosaic-newrelic` → `newrelic-mcp`. `kai-mcp` and `admin-mcp` were already aligned; `mosaic-meta-ads` is unchanged (skill-only, not an MCP).
 - Renamed corresponding skill folders to match: `skills/mosaic-mixpanel/` → `skills/mixpanel-mcp/`, `skills/mosaic-firebase/` → `skills/firebase-mcp/`, `skills/mosaic-newrelic/` → `skills/newrelic-mcp/`. Skill IDs you type change accordingly (e.g. `kai:mosaic-mixpanel` → `kai:mixpanel-mcp`).

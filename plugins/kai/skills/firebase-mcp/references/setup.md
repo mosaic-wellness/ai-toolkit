@@ -1,8 +1,15 @@
 # Firebase — Auth Setup
 
 The `firebase-mcp` MCP server uses the **Firebase CLI's own OAuth
-session** — there is no token to paste. The setup is a one-time
-`firebase login` flow.
+session** — there is no token to paste. The setup is a one-time login
+flow.
+
+**No global firebase CLI install required.** The plugin ships
+`npx -y firebase-tools@latest mcp` in `.mcp.json`, so the MCP server
+runs via npx on demand. Login can be done the same way:
+`npx -y firebase-tools@latest login` writes the same auth tokens to
+`~/.config/configstore/firebase-tools.json` that a globally-installed
+CLI would.
 
 This is different from Mixpanel/New Relic, which use long-lived API tokens.
 
@@ -14,7 +21,8 @@ This is different from Mixpanel/New Relic, which use long-lived API tokens.
 /kai tools-init firebase
 ```
 
-The wizard runs `firebase login`, which:
+The wizard runs `npx -y firebase-tools@latest login` (or `firebase login`
+if you already have the CLI globally installed), which:
 
 1. Opens your default browser to a Google OAuth consent screen.
 2. Asks you to sign in with your **`@mosaicwellness.in`** Google account
@@ -43,9 +51,10 @@ least one known Mosaic project ID. Expected projects include:
 - `middle-east-a7a72`
 - `app-uninstall-tracking-aa55f`
 
-If your `firebase login` succeeded but **none** of those appear, you're
-logged into the wrong Google account. Run `firebase logout` and try again
-with your `@mosaicwellness.in` address.
+If your login succeeded but **none** of those appear, you're
+logged into the wrong Google account. Run
+`npx -y firebase-tools@latest logout` (or `firebase logout` if you have
+it globally) and try again with your `@mosaicwellness.in` address.
 
 ---
 
@@ -54,8 +63,9 @@ with your `@mosaicwellness.in` address.
 The Firebase MCP works on **one active project at a time**. To switch:
 
 ```
-firebase use <project-id>
+npx -y firebase-tools@latest use <project-id>
 ```
+(or `firebase use <project-id>` if you have the CLI globally installed)
 
 …or inside Claude:
 
@@ -85,8 +95,9 @@ risky writes.
 If you see "auth expired" errors:
 
 ```
-firebase login --reauth
+npx -y firebase-tools@latest login --reauth
 ```
+(or `firebase login --reauth` if you have the CLI globally installed)
 
 …or run `/kai tools-init firebase` again.
 
@@ -97,8 +108,9 @@ firebase login --reauth
 Leaving the team, switching machines, or rotating Google account:
 
 ```
-firebase logout
+npx -y firebase-tools@latest logout
 ```
+(or `firebase logout` if you have the CLI globally installed)
 
 Then `/kai tools-init status` will show Firebase as not
 authenticated.
