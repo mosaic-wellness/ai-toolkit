@@ -51,6 +51,7 @@ Every agent in this plugin follows these rules:
 | mosaic-mixpanel | Mixpanel-related questions about Mosaic brands | Org-wide brand→project resolver, lexicon query script, prod-default + geo rules |
 | mosaic-firebase | Firebase / Crashlytics / Remote Config questions | Brand→Firebase project map, Android/iOS bundle lookup, gotchas |
 | mosaic-newrelic | NRQL / latency / error rate / alert questions | Service entity map, log message schema, Kai-vs-direct-NR routing |
+| mosaic-meta-ads | Meta / Facebook / Instagram Ads questions (read-only) | Mosaic business + ad-account map, custom-connector setup, write-tool refusal policy. Companion PreToolUse hook (`block-meta-writes.sh`) hard-blocks create/update/activate. |
 | kai-mcp | Operational data — orders, users, CS, deployments, internal policies | 8-category routing for the Kai orchestrator MCP, brand-code mapping (MM/MW/BW/LJ/AS-IN) |
 
 ## References

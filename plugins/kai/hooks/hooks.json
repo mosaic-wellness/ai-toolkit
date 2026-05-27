@@ -9,6 +9,15 @@
             "prompt": "Block if file contains hardcoded API keys or secrets (sk-ant-*, sk-*, amk_*, OPENAI_API_KEY=sk-*, GEMINI_API_KEY=*, ELEVENLABS_API_KEY=*, NRAK-* / NEW_RELIC_API_KEY=NRAK-* (New Relic), NRII-* (New Relic ingest), MIXPANEL_SERVICE_ACCOUNT_TOKEN=<long-hex>, Bearer tokens with sk-*, or tokens in URLs like ?token= or ?api_key=). Warn: 'Use environment variables (e.g. ${NEW_RELIC_API_KEY}) instead — see ${CLAUDE_PLUGIN_ROOT}/skills/tools-init/SKILL.md for the persistent-credentials flow.'"
           }
         ]
+      },
+      {
+        "matcher": "mcp__.*Meta.*__ads_(create|update|activate)_.*|mcp__.*Meta.*__ads_catalog_create.*|mcp__.*[Mm]eta.*__ads_update_custom_audience_users",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-meta-writes.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
