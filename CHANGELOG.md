@@ -2,6 +2,12 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.1.0] - 2026-05-27
+- New `mosaic-meta-ads` skill — read-only Meta / Facebook / Instagram Ads coverage for Mosaic brands. Bakes in the org map (3 business managers, ~14 ad accounts across MM, LJ, AS-IN, BBW ×4, OTC, Little Gem, MWL UAE, BBW UAE, LJ UAE, LJ KSA; INR vs AED currency split; live `is_ads_mcp_enabled` flags). Ships three references — `setup.md` (Claude Desktop custom-connector flow — Meta MCP does NOT work via `.mcp.json`, OAuth requires the browser flow bound to a Claude account), `org-context.md` (authoritative brand → ad_account_id table, cross-platform brand-code translations to Mixpanel/Kai/Firebase), `read-only-tools.md` (full allow/block catalogue)
+- New `block-meta-writes.sh` PreToolUse hook hard-blocks every Meta write tool — `ads_create_*`, `ads_update_*`, `ads_activate_entity`, `ads_catalog_create*`, `ads_update_custom_audience_users`. Exit-2 with a guidance message routing the user to Ads Manager. Defense in depth: a regex matcher in `hooks.json` narrows tool dispatch, the script re-validates `tool_name` from the JSON payload, and the policy is documented in the skill body so refusals read consistently across the surface
+- Skill cross-references existing siblings — `mosaic-mixpanel` for funnel analysis, `mosaic-newrelic` for site-side issues, `kai-mcp` for orders/CS — so cross-platform "why did sales drop yesterday" questions get routed across Meta + funnel + ops in parallel rather than concluding from Meta alone
+
+
 ## [kai@1.0.0] - 2026-05-26
 - **New plugin** — successor to `mosaic-buddy`. Inherits all of mosaic-buddy 3.7.0's content (10 agents, 8 skills, hooks, conventions, references) and adds Mosaic-wide MCP wiring plus an interactive setup wizard. Slash command moves from `/mosaic-buddy` to `/kai`. `mosaic-buddy` is marked deprecated in the marketplace; teams should uninstall it and install `kai`
 - Ships `.mcp.json` declaring `mosaic-mixpanel`, `mosaic-firebase`, `kai-mcp`, and `mosaic-newrelic` with `${VAR}` env-var references — MCPs auto-register on plugin install and silently fail until `tools-init` provisions tokens

@@ -7,8 +7,8 @@ description: >
   "/kai brainstorm" (help me plan), "/kai 5x" (quick coaching), "/kai 10x" (deep coaching).
 user-invocable: true
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
-argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | tools-init | 5x | 10x | recommendations | help]"
+allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion, ToolSearch
+argument-hint: "[doctor | review | review-stack | ux | brainstorm | grillme | document | debug | handoff | sidequest | feedback | token-usage-guardrails | tools-init | migrate | admin | habit | 5x | 10x | recommendations | help]"
 ---
 
 # Kai — Command Router
@@ -44,6 +44,9 @@ Parse the user's subcommand from `$ARGUMENTS` and route as follows. Matching is 
 | feedback | rating, "give feedback", "submit feedback", "rate this" | Handle inline (see Section 7) |
 | token-usage-guardrails | tokens, "token guardrails", "token efficiency", "optimize tokens" | Handle inline (see Section 9) |
 | tools-init [sub] | tools, "set up tools", "set up mixpanel", "set up firebase", "set up new relic", "configure tokens", "wire mcp" | Handle inline (see Section 10) |
+| migrate | "migrate from mosaic-buddy", "coming from mosaic-buddy", "migrate from mosaic-admin", "switch to kai", "uninstall mosaic-buddy", "uninstall mosaic-admin" | Handle inline (see Section 11) |
+| admin | mosaic-admin, page, pdp, widget, experiment, landing, "edit page", "build page", "a/b test" | Classify intent → spawn `page-editor`, `page-builder`, or `experiment-manager` agent (see Section 12) |
+| habit | tracker, habit-tracker, "habit task", "habit feature", "habit author" | Spawn `habit-author` agent with any remaining arg text as context (see Section 13) |
 | 5x [all] | coach, insights, "how am I doing", "quick coaching" | Spawn `coach-lite` agent |
 | 10x [all] | "deep coaching", "full coaching" | Spawn `coach` agent |
 | recommendations | plugins, suggest | Handle inline (see Section 5) |
@@ -112,6 +115,10 @@ Here's everything I can do:
   Fork or resume a sidequest        /kai sidequest <forkName>
   Share feedback with the team      /kai feedback
   Set up token guardrails           /kai token-usage-guardrails
+  Wire Mixpanel / Firebase / NR     /kai tools-init
+  Coming from mosaic-buddy/-admin?  /kai migrate
+  Update / build / experiment on pages    /kai admin
+  Manage habit trackers & tasks           /kai habit
   What plugins should I use?        /kai recommendations
 ```
 
@@ -186,6 +193,25 @@ COMMANDS
   status | validate | mixpanel | firebase | newrelic |
   rotate <tool> | remove <tool>.
 
+  Coming from mosaic-buddy or         /kai migrate
+  mosaic-admin?
+  Copies your tokens to the new ~/.config/kai/ path, prints the
+  command mappings for both retired plugins, and tells you how
+  to uninstall them. Idempotent.
+
+  Update / build / experiment on pages /kai admin
+  Edit PDPs and widget pages, build new pages from clones, run
+  A/B experiments on PDPs — all on staging via admin-mcp. Spawns
+  the right specialist (page-editor / page-builder /
+  experiment-manager) based on your intent.
+
+  Manage habit trackers & tasks       /kai habit
+  Create / clone / edit / map habit trackers and tasks across
+  the 7 supported brands (mm, bw, lj, lj-ae, mm-ae, wn-in,
+  as-in). Spawns the habit-author agent which knows the
+  duplicate-only task creation pattern, lock TTL, and pagination
+  etiquette.
+
   Quick coaching scan                   /kai 5x
   Fast, token-efficient coaching report. Preprocessed analysis
   finds superpowers, time sinks, and quick wins.
@@ -211,6 +237,12 @@ EXAMPLES
   /kai tools-init          Wire Mixpanel/Firebase/NR (interactive)
   /kai tools-init mixpanel Set up just Mixpanel
   /kai tools-init status   Show which tools are wired up
+  /kai migrate             Switch from mosaic-buddy / mosaic-admin to kai
+  /kai admin               Page configs (PDPs, widgets, experiments)
+  /kai admin update <url>  Edit a page on staging
+  /kai admin experiments   Manage A/B experiments
+  /kai habit               Manage habit trackers & tasks
+  /kai habit duplicate task STRETCH30 on bw   Quick habit recipe entry
   /kai 5x                  Quick coaching scan
   /kai 10x                 Deep coaching with full transcripts
 ```
@@ -296,7 +328,122 @@ When subcommand is `tools-init`:
 
 ---
 
-## 11. Sign-Off
+## 11. Migrate (inline)
+
+When subcommand is `migrate`:
+
+1. Load the skill: read `${SKILL:migrate}`.
+2. Execute the skill's steps end-to-end. This is a workflow command — it
+   detects legacy `~/.config/mosaic-buddy/` state, copies tokens to the
+   new path if needed, prints the `/mosaic-buddy → /kai` command mapping,
+   and tells the user how to uninstall the retired plugin.
+
+**Safety rails:**
+- NEVER delete the legacy tokens file or the `~/.config/mosaic-buddy/`
+  or `~/.config/mosaic-admin/` directories. The user removes those
+  manually after they confirm kai works end-to-end.
+- NEVER overwrite an existing `~/.config/kai/tokens.env` — if both files
+  exist, surface the conflict and let the user decide.
+- NEVER run `/plugin uninstall mosaic-buddy` or `/plugin uninstall
+  mosaic-admin` programmatically. Tell the user to type it themselves.
+
+---
+
+## 12. Admin (inline)
+
+When subcommand is `admin`:
+
+The remainder of `$ARGUMENTS` (after the word `admin`) is the user's intent.
+Classify it and spawn the right specialist agent:
+
+1. **If the args contain a URL, "update", "edit", "change", "modify", "fix",
+   "tweak"** → spawn the `page-editor` agent, passing the args as context.
+2. **If the args contain "create", "build", "new page", "new landing",
+   "landing page", "clone", "duplicate page"** → spawn the `page-builder`
+   agent, passing the args as context.
+3. **If the args contain "experiment", "a/b", "ab test", "test", "variant",
+   "winner", "promote", "traffic split"** → spawn the `experiment-manager`
+   agent, passing the args as context.
+4. **If the args contain "setup", "set up", "wire up", "configure",
+   "credentials", "api key"** → point the user at `/kai tools-init admin-mcp`
+   and walk them through the API-key flow (or read
+   `${CLAUDE_PLUGIN_ROOT}/skills/tools-init/SKILL.md` and dispatch directly).
+5. **If the args are empty OR don't match any of the above** → call
+   `AskUserQuestion` with a 4-option menu mirroring the retired
+   `/mosaic-admin` first menu:
+
+   ```json
+   {
+     "questions": [{
+       "question": "What kind of admin task?",
+       "header": "Admin",
+       "multiSelect": false,
+       "options": [
+         {
+           "label": "Page content",
+           "description": "Edit text, images, widgets, or display order on a PDP or widget page"
+         },
+         {
+           "label": "Widgets & schemas",
+           "description": "Look up widget types or add a new widget to a page"
+         },
+         {
+           "label": "Experiments",
+           "description": "Create, monitor, or promote a PDP A/B experiment"
+         },
+         {
+           "label": "Reference & setup",
+           "description": "Brand/bucket lookup, error troubleshooting, or set up the admin-mcp API key"
+         }
+       ]
+     }]
+   }
+   ```
+
+   Dispatch based on the choice:
+   - **Page content** → `page-editor` (or `page-builder` if the user mentions creating)
+   - **Widgets & schemas** → `page-editor` (use `list_widget_types` / `get_widget_schema` MCP tools inline)
+   - **Experiments** → `experiment-manager`
+   - **Reference & setup** → read the relevant ref file inline from
+     `${CLAUDE_PLUGIN_ROOT}/references/admin/` (route-reference,
+     brand-bucket-reference, error-handling) and answer; for credentials
+     redirect to `/kai tools-init admin-mcp`
+
+The `admin-essentials` and `bulk-operations` skills auto-activate alongside
+spawned agents — they don't need to be loaded explicitly here.
+
+**Safety rails:**
+- admin-mcp writes are staging-only by design. Never imply MCP can publish
+  to production — production publishing goes through the admin dashboard UI.
+- The PreToolUse hook in `hooks/hooks.json` checks every admin-mcp write
+  for brand validity (18-brand set for PDP/widget/experiment) and warns
+  on non-default brands.
+
+---
+
+## 13. Habit (inline)
+
+When subcommand is `habit`:
+
+The remainder of `$ARGUMENTS` (after the word `habit`) is the user's intent.
+
+1. **Spawn the `habit-author` agent**, passing the remainder text as context.
+2. If the remainder is empty, the agent itself prompts the user for goal +
+   brand + (when relevant) source task/tracker IDs.
+
+The `habit-essentials` and `habit-workflows` skills auto-activate alongside
+the spawned agent — they don't need explicit loading here.
+
+**Safety rails:**
+- Habit only supports 7 brands (mm, bw, lj, lj-ae, mm-ae, wn-in, as-in).
+  The hook + agent + essentials skill all enforce this.
+- All habit writes are staging-only.
+- No delete tool exists for habit entities — use unmap / unassign instead.
+- Don't auto-paginate `habit_list_*` responses; ask the user first.
+
+---
+
+## 14. Sign-Off
 
 For inline responses (help, recommendations, menu), do NOT add a fix-it offer — these are informational.
 
