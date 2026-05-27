@@ -20,3 +20,6 @@ dist/
 
 # IDEs
 .history/
+
+# Claude Code handoff summaries (local-only)
+work-log/

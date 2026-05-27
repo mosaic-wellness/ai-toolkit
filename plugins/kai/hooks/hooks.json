@@ -18,6 +18,15 @@
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-meta-writes.sh"
           }
         ]
+      },
+      {
+        "matcher": "mcp__admin-mcp__update_.*|mcp__admin-mcp__create_.*|mcp__admin-mcp__promote_.*|mcp__admin-mcp__upload_.*|mcp__admin-mcp__acquire_.*|mcp__admin-mcp__release_.*|mcp__admin-mcp__remove_.*|mcp__admin-mcp__publish_.*|mcp__admin-mcp__habit_create_.*|mcp__admin-mcp__habit_duplicate_.*|mcp__admin-mcp__habit_update_.*|mcp__admin-mcp__habit_map_.*|mcp__admin-mcp__habit_unmap_.*|mcp__admin-mcp__habit_bulk_.*|mcp__admin-mcp__habit_copy_.*|mcp__admin-mcp__habit_assign_.*|mcp__admin-mcp__habit_unassign_.*|mcp__admin-mcp__habit_acquire_.*|mcp__admin-mcp__habit_release_.*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "This is an admin-mcp write tool call. Inspect the tool name and arguments:\n\n1. If the tool name starts with `mcp__admin-mcp__habit_` → habit tools only support 7 brands (mm, bw, lj, lj-ae, mm-ae, wn-in, as-in). If the `brand` argument is not in this 7-brand set, BLOCK with: 'Habit only supports 7 brands (mm, bw, lj, lj-ae, mm-ae, wn-in, as-in). The provided brand is not supported.' If the brand is supported but not the default `mm`, add a brief warning: 'Writing to {brand} (not default mm) — confirm this is intentional.'\n\n2. Otherwise (PDP / widget / experiment write — `update_*`, `create_*`, `promote_*`, `upload_*`, `acquire_*`, `release_*`, `remove_*`, `publish_*`) → admin-mcp supports 18 brands across the storefronts (mm, mm-in, mm-ae, mm-co, bw, bw-ae, bw-co, bw-us, lj, lj-ae, lj-co, lj-sa, lj-us, rl-in, rl-us, wn-in, as-in, fw). Default is `mm`. If the brand is not in this 18-brand set, BLOCK with the same message style. If the brand is supported but not `mm`, add the same 'Writing to {brand} (not default mm) — confirm this is intentional.' warning.\n\n3. For write operations (any of update_/create_/promote_/upload_/publish_/duplicate_/map_/unmap_/bulk_/copy_/assign_/unassign_) where no `lock_token` or `lockToken` is provided, suggest acquiring a lock first for safety: 'Consider acquiring a lock with acquire_page_lock or habit_acquire_lock before this multi-step edit.' This is a suggestion, not a block.\n\nOtherwise, approve silently."
+          }
+        ]
       }
     ],
     "PostToolUse": [
