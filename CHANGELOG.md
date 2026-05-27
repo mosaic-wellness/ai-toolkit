@@ -2,6 +2,25 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.4.0] - 2026-05-27
+- **Architectural fix for "Missing environment variables" + "skipped — same command/URL" errors.** The plugin no longer ships `mosaic-newrelic` or `admin-mcp` entries in its own `.mcp.json`. Both were `${VAR}`-based, which caused Claude Code to flag them at startup whenever the env vars weren't set, and caused permanent dedup conflicts for users with a literal `amk_…` already inlined in `~/.claude.json`.
+- `tools-init` New Relic flow now writes the MCP entry directly into `~/.claude.json` `mcpServers["mosaic-newrelic"]` with the literal `NRAK-…` key in `headers["api-key"]` — no `tokens.env`, no shell-hook indirection. Uses `jq --arg` so the key never appears on a command line and the leaked-keys PostToolUse hook never sees it. Backs up `~/.claude.json` before writing; restores on failure.
+- `tools-init` admin-mcp flow same — writes literal `amk_…` into `~/.claude.json` `mcpServers["admin-mcp"]` `headers["x-api-key"]`. Existing inlined entries detected in Step 1 short-circuit the flow.
+- Plugin `.mcp.json` now only ships zero-credential MCPs: `mosaic-mixpanel` (OAuth via `mcp-remote`), `mosaic-firebase` (CLI auth), `kai-mcp` (public HTTP). Clean install no longer surfaces env-var validation errors.
+- `~/.config/kai/tokens.env` + shell-hook flow is retained as an opt-in fallback for env-var-based setups and one-time migration from `mosaic-buddy`. Steps 4 and 5 of the wizard are marked accordingly.
+
+
+## [kai-dev@1.0.1] - 2026-05-27
+- Fix `block-destructive-git.sh` PreToolUse hook path. `hooks.json`, `agents/architect.md`, and `agents/builder.md` referenced `scripts/block-destructive-git.sh` as a relative path, which failed (`No such file or directory`) whenever the agent's cwd wasn't the plugin root. Now uses `bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-destructive-git.sh` to match the convention used by every other hook in this repo.
+
+
+## [kai@1.3.0] - 2026-05-27
+- `tools-init` detection broadened. Step 1 now scans **four** sources before declaring a tool "missing": `~/.config/kai/tokens.env`, current shell env, user-level `~/.claude.json` (top-level `mcpServers` **and** per-project entries), and the plugin's own `.mcp.json`. A literal `amk_…` inlined in `~/.claude.json` headers, or a resolved `${VAR}` reference, now counts as ✓. Status table grew a "Source" column so users can see where each credential was found.
+- `tools-init` Mixpanel flow rewritten. Mixpanel auth happens via OAuth in `mcp-remote`, not via `MIXPANEL_SERVICE_ACCOUNT_TOKEN`. The wizard no longer prompts for a Service Account token, no longer probes `/api/app/me`, and no longer writes a `tokens.env` line. It just confirms the MCP entry exists and explains that the browser will pop on the first MCP call after a Claude Code restart.
+- `tools-init` admin-mcp short-circuit. If `~/.claude.json` already has an `admin-mcp` entry with a literal `amk_…` in `headers.x-api-key` that probes 200, the wizard reports it as ✓ and skips the paste prompt entirely. Only falls through to paste when no key is found OR the inlined key fails the probe.
+- Drop dead `MIXPANEL_SERVICE_ACCOUNT_TOKEN` env reference from `mosaic-mixpanel` entry in plugin `.mcp.json`. `mcp-remote` never consumed it.
+
+
 ## [kai@1.1.0] - 2026-05-27
 - New `mosaic-meta-ads` skill — read-only Meta / Facebook / Instagram Ads coverage for Mosaic brands. Bakes in the org map (3 business managers, ~14 ad accounts across MM, LJ, AS-IN, BBW ×4, OTC, Little Gem, MWL UAE, BBW UAE, LJ UAE, LJ KSA; INR vs AED currency split; live `is_ads_mcp_enabled` flags). Ships three references — `setup.md` (Claude Desktop custom-connector flow — Meta MCP does NOT work via `.mcp.json`, OAuth requires the browser flow bound to a Claude account), `org-context.md` (authoritative brand → ad_account_id table, cross-platform brand-code translations to Mixpanel/Kai/Firebase), `read-only-tools.md` (full allow/block catalogue)
 - New `block-meta-writes.sh` PreToolUse hook hard-blocks every Meta write tool — `ads_create_*`, `ads_update_*`, `ads_activate_entity`, `ads_catalog_create*`, `ads_update_custom_audience_users`. Exit-2 with a guidance message routing the user to Ads Manager. Defense in depth: a regex matcher in `hooks.json` narrows tool dispatch, the script re-validates `tool_name` from the JSON payload, and the policy is documented in the skill body so refusals read consistently across the surface
