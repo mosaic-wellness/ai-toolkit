@@ -11,6 +11,10 @@ description: >
   <example>Check the status of running experiments on Bodywise</example>
   <example>Promote the winning variant of experiment EXP-1234</example>
   <example>Adjust traffic split to 70/30 for the sleep gummies experiment</example>
+
+  If the user is starting from an ad narrative, creative brief, story angle, or positioning
+  direction (rather than a single isolated change), defer to the `pdp-narrative-experiments`
+  skill — it handles the narrative→widget compilation pipeline that this agent does not.
 tools: Read, Glob, Grep, Bash, ToolSearch, AskUserQuestion
 model: sonnet
 ---

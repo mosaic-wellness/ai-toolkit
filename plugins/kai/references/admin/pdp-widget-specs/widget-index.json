@@ -1,0 +1,766 @@
+{
+  "generated_at": "2026-05-27T15:36:26.440Z",
+  "source_provenance": "b6d1d0fb6c5e5b70d31f2322867cfb6bad7f5b92",
+  "source_count": 122,
+  "pdp_relevant_count": 58,
+  "renderable_count": 107,
+  "widgets": {
+    "ACCORDION": {
+      "type": "ACCORDION",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "OBJECTION"
+      ],
+      "primary_role": "OBJECTION",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/ACCORDION.md",
+      "summary": "A list of expandable sections. Used for \"Additional information\", \"Ingredients\",",
+      "edit_safety_summary": "🟢 `list[].title`, `list[].content` (when no new claims), `triggerEvent` if it's purely cosmetic. · 🟡 `list[].content` that asserts health / safety / regulatory claims; `iconVariant`. · 🔴 `list[].id`, `source`, `triggerEvent` if it routes to an analytics destination."
+    },
+    "ACCORDION_WITH_SHOW_MORE": {
+      "type": "ACCORDION_WITH_SHOW_MORE",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "OBJECTION"
+      ],
+      "primary_role": "OBJECTION",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/ACCORDION_WITH_SHOW_MORE.md",
+      "summary": "The richer cousin of `ACCORDION` — each row is a card with image, name, and",
+      "edit_safety_summary": "🟢 generic copy. · 🟡 `items[].description` — ingredient efficacy claims; `items[].tag` (sometimes regulatory \"Lab-tested\" tag). · 🔴 `items[].id`, `decorationIcons.*` URLs are 🟢 but their slots are structural."
+    },
+    "AFFILIATE_CARD": {
+      "type": "AFFILIATE_CARD",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/AFFILIATE_CARD.md",
+      "summary": "Affiliate-program promo card shown to affiliate users — earnings nudge, share link,",
+      "edit_safety_summary": "🟢 `title`, `subtitle`, `preTitle`, `tag`. · 🟡 `cta.label`, `media`, any payout-implying amount, `membershipPassNudge` copy. · 🔴 `affiliateUser.id`, `urlKey`, `productInfo.sku`, `shouldShow` / `showAffiliateCard` / `showWalletNudgeNew` (middleware-set), `cta.actions[]`."
+    },
+    "BANNER": {
+      "type": "BANNER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "HERO",
+        "NUDGE"
+      ],
+      "primary_role": "HERO",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/BANNER.md",
+      "summary": "A media (image, video, or Lottie) with an optional CTA overlaid. The most reused",
+      "edit_safety_summary": "🟢 AI-safe: `media.source` (when a marketing creative), `media.altText`, `media.posterImage`, `media.videoTitle`, `cta.label`, `cta.subText`. · 🟡 Sensitive: any `cta` label or copy that asserts an offer (\"30% off\"), regulatory imagery in `media.source`. · 🔴 Structural: `slug`, `cta.actions[]` (action wiring), `media.mediaType`, `aspectRatio` (CLS budget), all enum variants (`variant`, `size`, `loading`, `objectFit`)."
+    },
+    "BENEFITS_HIGHLIGHTS": {
+      "type": "BENEFITS_HIGHLIGHTS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/BENEFITS_HIGHLIGHTS.md",
+      "summary": "A bulleted-list-of-benefits block with optional icons next to each line. Used for",
+      "edit_safety_summary": "🟡 **every line** — `items[].title`, `items[].subtitle`, `items[].body`. The verb in each line carries legal weight (\"helps\" vs \"cures\" vs \"guarantees\"). · 🟢 `items[].icon` URL when decorative."
+    },
+    "BREAD_CRUMBS": {
+      "type": "BREAD_CRUMBS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "ANCHOR"
+      ],
+      "primary_role": "ANCHOR",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/BREAD_CRUMBS.md",
+      "summary": "The category trail: Home › Hair › Hair Growth › Shilajit Gummies. Both a navigation",
+      "edit_safety_summary": "🔴 every `options[].url`, `options[].isCurrent`, `category` (structural; affects crawl + SEO). · 🟡 `options[].label` (changing the visible category name has SEO and CX implications). · 🟢 `iconColor`."
+    },
+    "CALL_TO_ACTION": {
+      "type": "CALL_TO_ACTION",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/CALL_TO_ACTION.md",
+      "summary": "A standalone CTA button (or button-group) — for nudge-style sections like",
+      "edit_safety_summary": "🟢 `items[].label`, `items[].subText`. · 🟡 `items[].label` when promising a service (\"Consult a doctor in 5 min\" is a commitment). · 🔴 `items[].actions[]`, `source`, `stickyFooterVariant`."
+    },
+    "CALLOUT_WITH_IMAGE": {
+      "type": "CALLOUT_WITH_IMAGE",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/CALLOUT_WITH_IMAGE.md",
+      "summary": "A simple text + image callout strip. Used for inline product callouts (\"Gifts with",
+      "edit_safety_summary": "🟢 `text`, `altText`, `image` URL. · 🟡 `text` if it states a guarantee or threshold (\"Free delivery on orders > ₹999\"). · 🔴 `variant` enum."
+    },
+    "CAROUSEL_WITH_THUMBNAIL": {
+      "type": "CAROUSEL_WITH_THUMBNAIL",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "HERO"
+      ],
+      "primary_role": "HERO",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/CAROUSEL_WITH_THUMBNAIL.md",
+      "summary": "Image gallery with a thumbnail strip below. Alternative to `EXPANDED_MEDIA` —",
+      "edit_safety_summary": "🟢 `items[].alt`, decorative thumbs. · 🟡 image URLs if regulated packaging. · 🔴 `productInfo.sku`, `sliderConfig` enum values, `thumbnailConfig.position`."
+    },
+    "CHECK_DELIVERY_INFO": {
+      "type": "CHECK_DELIVERY_INFO",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "LOGISTICS"
+      ],
+      "primary_role": "LOGISTICS",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/CHECK_DELIVERY_INFO.md",
+      "summary": "Pincode-based delivery-date estimator. Shows \"Delivery by Tuesday\" once the user",
+      "edit_safety_summary": "🟢 `title`, `subTitle`, `desc`, `descImage` URL. · 🟡 the live `qddData.*` delivery-date fields, `cta.label` if it implies a delivery commitment, copy in `setLocationConfig` / `editLocationConfig`. Delivery copy is a customer commitment. · 🔴 `endpointData`, `pincodeBoxData` shape, `cta.actions[]`, `productInfo.sku`."
+    },
+    "COMPARISON_TABLE": {
+      "type": "COMPARISON_TABLE",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/COMPARISON_TABLE.md",
+      "summary": "\"How we compare\" table — rows of features × columns of competitors with checks/crosses.",
+      "edit_safety_summary": "🟡 **every cell** — `tableHeader[].label`, `items[].feature`, `items[].values[]`. Comparative claims need legal sign-off. · 🟢 `icons.tick`, `icons.cross`, `icons.dash` URLs (decorative). · 🔴 `tableHeader[].isHighlighted` flag drives which column reads as \"your brand\" — structural."
+    },
+    "CUSTOM_COMPONENT": {
+      "type": "CUSTOM_COMPONENT",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "ANCHOR"
+      ],
+      "primary_role": "ANCHOR",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/CUSTOM_COMPONENT.md",
+      "summary": "Escape hatch — renders a tree of arbitrary \"nodes\" via a generic",
+      "edit_safety_summary": "🔴 **entire `nodes[]` tree** — the node tree is structural. No safe automated rewriting. If new copy is needed, file a request to promote it to a real widget. · 🟢 leaf-level `text` content inside nodes (when an automated tool can verify the node is a pure text leaf)."
+    },
+    "EXPANDED_MEDIA": {
+      "type": "EXPANDED_MEDIA",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "HERO"
+      ],
+      "primary_role": "HERO",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/EXPANDED_MEDIA.md",
+      "summary": "The PDP hero image gallery — full-bleed slider of product images and videos with a",
+      "edit_safety_summary": "🟢 `items[].alt`, marketing-creative URLs. · 🟡 packaging shots that show regulatory copy (FSSAI marks, etc.); `discontinuedProductOverlayText`, `productOSSOverlayText`. · 🔴 `productInfo.sku`, `id`, `sliderConfig` enums, `showShareButton`."
+    },
+    "FAQ_ACCORDION": {
+      "type": "FAQ_ACCORDION",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "OBJECTION"
+      ],
+      "primary_role": "OBJECTION",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/FAQ_ACCORDION.md",
+      "summary": "A simple list of expandable Q&A items. The \"We've got answers\" / \"FAQ\" section near",
+      "edit_safety_summary": "🟢 AI-safe: `faqLabel`, `faqText`, `accordionItems[].title`, `accordionItems[].description` (when no new claims). · 🟡 Sensitive: any `description` that makes a health / efficacy / regulatory claim (\"cures\", \"treats\", \"clinically proven\"). Adding such language requires legal review. · 🔴 Structural: nothing rich here — this widget is mostly copy."
+    },
+    "HOW_WE_COMPARE": {
+      "type": "HOW_WE_COMPARE",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/HOW_WE_COMPARE.md",
+      "summary": "Deprecated predecessor to [`COMPARISON_TABLE`](COMPARISON_TABLE.md). Same intent —",
+      "edit_safety_summary": "🟡 every text field — `title`, `rowTitle`, `rows[]`, `happy.label`, `happy.items[]`, `sad.label`, `sad.items[]`. All comparative claims."
+    },
+    "INFO_LIST_WITH_ICONS": {
+      "type": "INFO_LIST_WITH_ICONS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "ANCHOR"
+      ],
+      "primary_role": "ANCHOR",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/INFO_LIST_WITH_ICONS.md",
+      "summary": "A vertical numbered (or icon-prefixed) list. Often used for \"How to use\" steps.",
+      "edit_safety_summary": "🟢 step titles and short descriptions. · 🟡 dosage / timing language (\"take 1 capsule daily after breakfast\") — health-claim sensitive. · 🔴 `showSerialNumber`, `list[].icon` slots when they encode meaning."
+    },
+    "INFO_TILE_CARD": {
+      "type": "INFO_TILE_CARD",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/INFO_TILE_CARD.md",
+      "summary": "A heading + grid of icon-tile cards within a gradient banner background. Used for",
+      "edit_safety_summary": "🟡 every tile label / subtitle — they are brand claims. · 🟢 `bannerGradient`, icon URLs."
+    },
+    "INFORMATION_GRID_STRIP": {
+      "type": "INFORMATION_GRID_STRIP",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/INFORMATION_GRID_STRIP.md",
+      "summary": "A horizontal strip of icon + short-label tiles. \"Vegan\", \"Plant-based\", \"Lab-tested\",",
+      "edit_safety_summary": "🟡 every `items[].label` and `items[].sublabel` — regulatory marks (\"FSSAI-approved\", \"Lab-tested\") cannot be changed without legal sign-off. · 🟢 `items[].icon` URLs (decorative SVGs). · 🔴 `category`, `items[].cta` actions."
+    },
+    "INSTALLMENT_OPTIONS": {
+      "type": "INSTALLMENT_OPTIONS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "LOGISTICS"
+      ],
+      "primary_role": "LOGISTICS",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/INSTALLMENT_OPTIONS.md",
+      "summary": "EMI / BNPL options block. Renders Snapmint, Simpl, or Pay-on-Salary terms based on",
+      "edit_safety_summary": "🟢 `widgetContent` HTML when it's pure copy. · 🟡 **everything else** — `price`, `installMentOptionType`, `isPayLater`, `snapmintPayOnSalaryWidget.maximumPrice`. Financial copy. · 🔴 `installMentOptionType` enum value itself when it changes the provider."
+    },
+    "MEDIA_CAROUSEL": {
+      "type": "MEDIA_CAROUSEL",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "SHOWCASE"
+      ],
+      "primary_role": "SHOWCASE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/MEDIA_CAROUSEL.md",
+      "summary": "A more configurable image / video carousel — used when `MEDIA_SLIDER` doesn't have",
+      "edit_safety_summary": "🟢 `items[].title`, `items[].subtitle`, alt text, marketing-creative URLs. · 🔴 `items[].cta.actions[]`, `carouselConfig` enums."
+    },
+    "MEDIA_SLIDER": {
+      "type": "MEDIA_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "SHOWCASE"
+      ],
+      "primary_role": "SHOWCASE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/MEDIA_SLIDER.md",
+      "summary": "Generic horizontal slider of media items (images, videos, or both). Used for",
+      "edit_safety_summary": "🟢 `items[].title`, `items[].subtitle`, alt text, marketing-creative URLs. · 🟡 slide CTAs that imply a commitment. · 🔴 `items[].cta.actions[]`, `sliderConfig` enums, `tickIcon`/`checkIcon` slots (their presence carries semantic meaning)."
+    },
+    "MEDIA_TEXT_BLOCK": {
+      "type": "MEDIA_TEXT_BLOCK",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "STORY"
+      ],
+      "primary_role": "STORY",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/MEDIA_TEXT_BLOCK.md",
+      "summary": "A block of media paired with text. Used for \"About the product\" hero blocks and",
+      "edit_safety_summary": "🟢 `items[].title`, `items[].subtitle`, `items[].body` (when no new claims). · 🟡 `items[].body` when asserting health / regulatory claims. · 🔴 `items[].cta.actions[]`, `items[].mediaPosition`, `items[].layout` (visual contract)."
+    },
+    "MEDIA_WITH_FOOTER_SLIDER": {
+      "type": "MEDIA_WITH_FOOTER_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "SHOWCASE"
+      ],
+      "primary_role": "SHOWCASE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/MEDIA_WITH_FOOTER_SLIDER.md",
+      "summary": "Like `MEDIA_WITH_HEADER_SLIDER` but with the title/subtitle below the media.",
+      "edit_safety_summary": "🟢 per-slide title / subtitle / alt text. · 🟡 `items[].modalContent` if it asserts claims; slide subtitle / badge. · 🔴 `modalEnabled`, `sliderConfig` enums."
+    },
+    "MEDIA_WITH_HEADER_SLIDER": {
+      "type": "MEDIA_WITH_HEADER_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "SHOWCASE"
+      ],
+      "primary_role": "SHOWCASE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/MEDIA_WITH_HEADER_SLIDER.md",
+      "summary": "A slider where each slide has its own header (title + subtitle) above the media.",
+      "edit_safety_summary": "🟢 per-slide title / subtitle / alt text. · 🟡 slide subtitle / badge when asserting a claim (\"clinically proven\", \"doctor-recommended\"). · 🔴 `slidesUiType`, `sliderConfig` enums, slide `cta.actions[]`."
+    },
+    "MULTI_PRODUCT_SELECTOR": {
+      "type": "MULTI_PRODUCT_SELECTOR",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EXPAND"
+      ],
+      "primary_role": "EXPAND",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/MULTI_PRODUCT_SELECTOR.md",
+      "summary": "\"Frequently bought together\" — a multi-product picker where the user toggles items",
+      "edit_safety_summary": "🟢 `pricingLabels.*` copy, `cta.label`, header copy. · 🟡 `products[].price`, `products[].discountedPrice`, `bundleConfig.discountPercent`, savings copy. · 🔴 `products[].sku`, `products[].urlKey`, `cta.actions[]` (the `ADD_TO_CART_MULTIPLE` payload)."
+    },
+    "NARRATIVE_AND_FACTS": {
+      "type": "NARRATIVE_AND_FACTS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE",
+        "STORY"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/NARRATIVE_AND_FACTS.md",
+      "summary": "A storytelling block with main title, media, and a \"fact tags\" grid. Used for the",
+      "edit_safety_summary": "🟢 `mainTitle`, `title` when descriptive. · 🟡 `content` (typically asserts claims), brand narrative copy if it makes promises. · 🔴 `media`, `topIcon` if they encode brand identity (e.g. mascot images)."
+    },
+    "OFFER_COUPON_CARD": {
+      "type": "OFFER_COUPON_CARD",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/OFFER_COUPON_CARD.md",
+      "summary": "A coupon-code card with \"tap to copy\" UX.",
+      "edit_safety_summary": "🟢 `buttonText`, `copiedButtonText`, `useCodeText`. · 🟡 `offerText`, `subText` (commercial copy; T&C language). · 🔴 `couponCode` — never auto-rewrite the code itself. Couponcode collisions or typos break checkout discount math."
+    },
+    "OFFER_NUDGE_CARD": {
+      "type": "OFFER_NUDGE_CARD",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/OFFER_NUDGE_CARD.md",
+      "summary": "A promotional / wallet / coupon nudge card. Often used as a sticky banner near the",
+      "edit_safety_summary": "🟢 `title`, `subtitle`, `preTitle`, `tag`, decorative `media`. · 🟡 `cta.label` when it implies a payout; visible offer amounts. · 🔴 `cta.actions[]`, `productInfo.sku`, `urlKey`, `shouldShow` / `showAffiliateCard` / `showWalletNudgeNew` (middleware-set toggles)."
+    },
+    "PINCODE_BOX": {
+      "type": "PINCODE_BOX",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "LOGISTICS"
+      ],
+      "primary_role": "LOGISTICS",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PINCODE_BOX.md",
+      "summary": "A standalone pincode-entry box that resolves to delivery date / quick-delivery",
+      "edit_safety_summary": "🟢 `title`, `subTitle`, placeholder + error messages inside `pincodeBox`. · 🟡 `cartMessage`, `toastText` (commitments shown to the user). · 🔴 `endpointData`, `pincodeAnalytics`, `analyticsEvents`."
+    },
+    "PRODUCT_CALL_TO_ACTION": {
+      "type": "PRODUCT_CALL_TO_ACTION",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "COMMIT"
+      ],
+      "primary_role": "COMMIT",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_CALL_TO_ACTION.md",
+      "summary": "The Add-to-Cart / Buy-Now buttons on a PDP — both the inline placement and the",
+      "edit_safety_summary": "🟢 AI-safe: `ctaLabel`, `goToCartLabel`, `bottomSheetProductsList.title`, copy fields on bottom-sheet products (`instruction`, `instructionList[]`, `duration`, `name`). · 🟡 Sensitive: `productInfo.*` price / OOS / rating fields, `productInfo.preorder.*`, `productInfo.highlights[].text`, `bottomSheetProductsList.products[].price`, `selectedFrequency`, anything that reads as a commitment to the customer. · 🔴 Structural: `productInfo.sku`, `productInfo.urlKey`, `bottomSheetProductsList.products[].id`, `bottomSheetProductsList.products[].sku`, `stickyFooterVariant`, `isStickyFooter`, `showBottomSheetOnAtc`, action wiring inside any CTA."
+    },
+    "PRODUCT_CARD_GRID": {
+      "type": "PRODUCT_CARD_GRID",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EXPAND"
+      ],
+      "primary_role": "EXPAND",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_CARD_GRID.md",
+      "summary": "Grid layout of product cards (responsive 2/3/4 columns). Used for \"Shop the range\",",
+      "edit_safety_summary": "🟢 `emptyState` copy, `source`. · 🟡 `products[]` price / discountedPrice. · 🔴 `products[].sku`, `products[].urlKey`, `products[].id`, `productImageAspectRatio`, `noOfColumnsDesktop` (layout contract)."
+    },
+    "PRODUCT_CARD_SLIDER": {
+      "type": "PRODUCT_CARD_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "HERO",
+        "EXPAND"
+      ],
+      "primary_role": "HERO",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_CARD_SLIDER.md",
+      "summary": "Horizontal slider of product cards. Used for \"Related\", \"Recently viewed\", \"You may",
+      "edit_safety_summary": "🟢 `emptyState` copy, `source`. · 🟡 `products[]` price / discountedPrice. · 🔴 `products[].sku`, `products[].urlKey`, `productImageAspectRatio`, `miniPdpCta`, `shouldOpenMiniPdp`, `sliderConfig` enums."
+    },
+    "PRODUCT_DETAILS_TILE": {
+      "type": "PRODUCT_DETAILS_TILE",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "OBJECTION"
+      ],
+      "primary_role": "OBJECTION",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_DETAILS_TILE.md",
+      "summary": "A multi-tile product-info block with show-more/show-less. Used for \"Product details\"",
+      "edit_safety_summary": "🟢 `heading`, `description`, `showMoreBtnText`, `showLessBtnText`. · 🟡 `items[].description` if it asserts claims. · 🔴 `sectionName` (analytics), `items[].icon` slots."
+    },
+    "PRODUCT_FOOTER_STICKY": {
+      "type": "PRODUCT_FOOTER_STICKY",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "COMMIT"
+      ],
+      "primary_role": "COMMIT",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_FOOTER_STICKY.md",
+      "summary": "The sticky bottom-of-screen footer with ATC + Buy Now + secondary nudges. The rich",
+      "edit_safety_summary": "🟢 `bottomToastConfig` copy, `goToCartCta.label`, `bottomSheetProductsList.title`, copy in `cartRedirectNudge`. · 🟡 every price / OOS / preorder / QD field, `dynamicCTAs[]` labels (time-windowed promo language), `outOfStockProduct` copy. · 🔴 `productInfo.sku`, `sku`, `productInfo.urlKey`, all action wiring in `bottomStickyAddToCartButton` / `bottomStickyBuyNowButton` / `goToCartCta`, `pdpAtcLoginConfig`, `isBrandInternational`, `virtual_product_type`, all `*Updating` runtime flags."
+    },
+    "PRODUCT_KIT_INFO": {
+      "type": "PRODUCT_KIT_INFO",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EXPAND"
+      ],
+      "primary_role": "EXPAND",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_KIT_INFO.md",
+      "summary": "Renders the \"what's in the kit\" section for kit/bundle products — a list of contained",
+      "edit_safety_summary": "🟢 `itemsCardsHeading`, `sectionName`, per-item `description`. · 🟡 `kitItems[].price`, `kitItems[].quantity`, `kitItems[].name` (branded), savings math. · 🔴 `kitItems[].id`, `kitItems[].sku`, `kitItems[].urlKey`."
+    },
+    "PRODUCT_REVIEW_CARD": {
+      "type": "PRODUCT_REVIEW_CARD",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "PROOF"
+      ],
+      "primary_role": "PROOF",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_REVIEW_CARD.md",
+      "summary": "A single-product review carousel — featured customer reviews specific to this",
+      "edit_safety_summary": "🟢 `heading`, `subHeading`, review body copy when not asserting a new claim. · 🟡 `items[].rating`, `items[].verified`, `items[].author`. · 🔴 `category` (analytics), `sliderConfig` enums."
+    },
+    "PRODUCT_SUBSCRIPTION": {
+      "type": "PRODUCT_SUBSCRIPTION",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "CALIBRATE"
+      ],
+      "primary_role": "CALIBRATE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_SUBSCRIPTION.md",
+      "summary": "\"Subscribe and save\" widget — lets the user pick a delivery frequency and get a",
+      "edit_safety_summary": "🟢 `title`, `toolTip.title`, `toolTip.body`, `options[].label`, `options[].savingsText`. · 🟡 `options[].discountPercent`, `options[].frequency`, `subscriptionInfo.*` (the subscription provider config carries commercial commitments), `oneTimeOrderCta.label` (when it offers an alternative price). · 🔴 `productInfo.sku`, `subscriptionInfo.planId`, `options[].id`, action wiring."
+    },
+    "PRODUCT_SUMMARY": {
+      "type": "PRODUCT_SUMMARY",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "HERO"
+      ],
+      "primary_role": "HERO",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_SUMMARY.md",
+      "summary": "The above-the-fold product card: name, price, discount, rating, callouts, installment",
+      "edit_safety_summary": "12🟢 · 20🟡 · 2🔴 fields"
+    },
+    "PRODUCT_SWITCHER": {
+      "type": "PRODUCT_SWITCHER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "CALIBRATE"
+      ],
+      "primary_role": "CALIBRATE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_SWITCHER.md",
+      "summary": "Cross-product navigation row — typically \"explore related products\" or \"shop by",
+      "edit_safety_summary": "🟢 `rows[].title`, item `tag` copy, item `name` if non-branded. · 🟡 item `price`, item `discountedPrice`. · 🔴 each item's `sku`, `urlKey`, `actions[]`."
+    },
+    "PRODUCT_SWITCHES": {
+      "type": "PRODUCT_SWITCHES",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "CALIBRATE"
+      ],
+      "primary_role": "CALIBRATE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_SWITCHES.md",
+      "summary": "Variant selector — quantity / size / pack-size / flavour switches that swap the",
+      "edit_safety_summary": "🟢 `products[].label`, `products[].name`, `source`. · 🟡 `products[].price`, `products[].discountedPrice`, `products[].badge` (\"BEST VALUE\", \"SAVE 33%\" are persuasion claims), `productSku` (drives which variant is selected). · 🔴 `products[].sku`, `urlKeyOfBasePdp`, all `*Updating` runtime flags, action wiring."
+    },
+    "PRODUCT_TESTIMONIALS": {
+      "type": "PRODUCT_TESTIMONIALS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "PROOF"
+      ],
+      "primary_role": "PROOF",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/PRODUCT_TESTIMONIALS.md",
+      "summary": "A testimonial carousel where each card also links to a product. Used for",
+      "edit_safety_summary": "🟢 `products[].customerName`, `products[].testimonial` (when no new claims). · 🟡 `products[].rating`, claim-bearing testimonial copy. · 🔴 `products[].urlKey`, `carouselConfig`."
+    },
+    "QNA": {
+      "type": "QNA",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "OBJECTION"
+      ],
+      "primary_role": "OBJECTION",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/QNA.md",
+      "summary": "Customer Q&A — questions asked by users, answered by the brand team or experts.",
+      "edit_safety_summary": "🟢 `askQuestionText`, `viewAllQuestionsCTA.label`, items' `question` and `answer` body (when not adding new claims). · 🟡 `items[].answeredBy` (expert/author claim), `items[].verified`, claim-bearing answers. · 🔴 `items[].id`, `productInfo.sku`, `endpointData.url`, `allQuestionsUrl`, action wiring."
+    },
+    "RATINGS_AND_REVIEWS": {
+      "type": "RATINGS_AND_REVIEWS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "PROOF"
+      ],
+      "primary_role": "PROOF",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/RATINGS_AND_REVIEWS.md",
+      "summary": "The ratings overview + top reviews block. Renders the avg-rating, star breakdown,",
+      "edit_safety_summary": "🟢 `topReviewsLabel`, `starLabels.*` copy, `writeReviewCta.label`, `allReviewsCtaLabel`. · 🟡 `ratingOverview.average`, `ratingOverview.total`, `ratingOverview.breakdown.*` (numeric ratings — auto-injected, never manually rewrite); `topReviews[].body`, `topReviews[].rating`, `topReviews[].verified`, `customerSay` AI summary. · 🔴 `urlKey`, `productInfo.sku`, `endpointData.url`, `endpointData.method`, `writeReviewCta.actions[]`, `allReviewsCta.actions[]`."
+    },
+    "RECENTLY_VIEWED_CATALOG_CARDS": {
+      "type": "RECENTLY_VIEWED_CATALOG_CARDS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EXPAND"
+      ],
+      "primary_role": "EXPAND",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/RECENTLY_VIEWED_CATALOG_CARDS.md",
+      "summary": "Grid variant of [`RECENTLY_VIEWED_PRODUCT_CARD_SLIDER`](RECENTLY_VIEWED_PRODUCT_CARD_SLIDER.md).",
+      "edit_safety_summary": "🟢 header `title` / `subTitle` when authored. · 🔴 the products list itself is user-history-driven and not authored — nothing to edit."
+    },
+    "RECENTLY_VIEWED_PRODUCT_CARD_SLIDER": {
+      "type": "RECENTLY_VIEWED_PRODUCT_CARD_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EXPAND"
+      ],
+      "primary_role": "EXPAND",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/RECENTLY_VIEWED_PRODUCT_CARD_SLIDER.md",
+      "summary": "Personalized \"recently viewed\" product slider. `widgetData` is empty at authoring",
+      "edit_safety_summary": "🟢 header `title` / `subTitle` when authored. · 🔴 the products list itself is user-history-driven; nothing in the JSON is authored content."
+    },
+    "REELS_SLIDER": {
+      "type": "REELS_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "SHOWCASE"
+      ],
+      "primary_role": "SHOWCASE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/REELS_SLIDER.md",
+      "summary": "Vertical-video / \"reels\" carousel — short-form videos with optional product overlay.",
+      "edit_safety_summary": "🟢 `items[].title`, `bottomCta.label`, decorative icons. · 🟡 video content via `items[].media.source` URL — the video itself may contain claims. · 🔴 `items[].products[]` ref, `variant`, `sliderConfig`."
+    },
+    "REVIEW_IMAGE_SLIDER": {
+      "type": "REVIEW_IMAGE_SLIDER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "PROOF"
+      ],
+      "primary_role": "PROOF",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/REVIEW_IMAGE_SLIDER.md",
+      "summary": "A slider of customer-submitted photos with ratings overlay. Used for the",
+      "edit_safety_summary": "🟢 `items[].customerName`, body copy. · 🟡 `items[].rating`, `customerRating` aggregate. · 🔴 `items[].productHandle`, `aspectRatio`, `sliderConfig`."
+    },
+    "SOCIAL_REVIEW_LIST": {
+      "type": "SOCIAL_REVIEW_LIST",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "PROOF"
+      ],
+      "primary_role": "PROOF",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/SOCIAL_REVIEW_LIST.md",
+      "summary": "A vertical list of social-style review cards with photos and short quotes — designed",
+      "edit_safety_summary": "🟢 `reviews[].author`, body copy. · 🟡 `reviews[].rating`, `reviews[].verified`, `reviews[].photo` (UGC has rights implications). · 🔴 `reviews[].productHandle`, `cta.actions[]`."
+    },
+    "STATS_TILES_WITH_DESCRIPTION": {
+      "type": "STATS_TILES_WITH_DESCRIPTION",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "EVIDENCE"
+      ],
+      "primary_role": "EVIDENCE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/STATS_TILES_WITH_DESCRIPTION.md",
+      "summary": "Hero stat tiles (numeric callouts) with a description paragraph. Used for",
+      "edit_safety_summary": "🟡 **all of `items[].stat`, `items[].label`, `items[].footnote`, `text`, `title`** — each is a substantive claim. Especially `footnote` (the study attribution); removing it can make an otherwise-defensible claim unsubstantiated. · 🟢 nothing — every visible field carries weight here."
+    },
+    "STATUS_CARD": {
+      "type": "STATUS_CARD",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/STATUS_CARD.md",
+      "summary": "A small inline card showing a single status / alert — \"this product is in your cart\",",
+      "edit_safety_summary": "🟢 `heading`, `alertMessage` (when describing user state). · 🟡 messaging that implies cart state (\"Item already in your cart\")."
+    },
+    "STICKY_CTA_BUTTON": {
+      "type": "STICKY_CTA_BUTTON",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "COMMIT"
+      ],
+      "primary_role": "COMMIT",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/STICKY_CTA_BUTTON.md",
+      "summary": "A simpler sticky-button widget than `PRODUCT_FOOTER_STICKY`. Used for non-product",
+      "edit_safety_summary": "🟢 `button.label`, padding numerics. · 🟡 labels that imply a service guarantee. · 🔴 `button.actions[]`, `addPadding`, `addShadow`, `isSticky`."
+    },
+    "TABBY_PROMO": {
+      "type": "TABBY_PROMO",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "LOGISTICS"
+      ],
+      "primary_role": "LOGISTICS",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/TABBY_PROMO.md",
+      "summary": "Tabby BNPL promotional strip — \"Split into 4 payments of ₹X\" line. UAE-specific",
+      "edit_safety_summary": "🟡 `price` (live-injected). All visible text comes from the Tabby SDK iframe — not directly editable from this widget's JSON."
+    },
+    "TAG_MEDIA": {
+      "type": "TAG_MEDIA",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "ANCHOR"
+      ],
+      "primary_role": "ANCHOR",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/TAG_MEDIA.md",
+      "summary": "A small brand-mark / navbar-decoration image rendered at the very top of the page —",
+      "edit_safety_summary": "🟢 AI-safe · 🟡 Sensitive · 🔴 Structural."
+    },
+    "TESTIMONIALS": {
+      "type": "TESTIMONIALS",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "PROOF"
+      ],
+      "primary_role": "PROOF",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/TESTIMONIALS.md",
+      "summary": "Customer / influencer testimonials with photos, star ratings, and quoted text.",
+      "edit_safety_summary": "🟢 styling fields (`backgroundColor`, `labelColor`, `pillColor`, `pillTextColor`). · 🟡 `items[].name`, `items[].quote`, `items[].rating`, `items[].verified`, `items[].location`. Especially `verified` — has legal implications. · 🔴 `starIcon`, `verifiedIcon` slots."
+    },
+    "TEXT_CONTAINER": {
+      "type": "TEXT_CONTAINER",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "ANCHOR"
+      ],
+      "primary_role": "ANCHOR",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/TEXT_CONTAINER.md",
+      "summary": "Pure text / HTML block. Used for SEO copy, fine-print disclaimers, secondary",
+      "edit_safety_summary": "🟢 marketing copy in the SEO body. · 🟡 legal disclaimers, T&C, regulatory language. · 🔴 `displayHTMl` flag (changes safety mode), `variant`."
+    },
+    "USAGE_AND_TESTIMONIAL": {
+      "type": "USAGE_AND_TESTIMONIAL",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "STORY"
+      ],
+      "primary_role": "STORY",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/USAGE_AND_TESTIMONIAL.md",
+      "summary": "Combined \"How to use\" + customer testimonial section. Compact layout for narrow",
+      "edit_safety_summary": "🟢 `title`, `subtitle`, voice quote in `content` (when no new claims). · 🟡 dosage / timing language; `content` if asserting a health claim. · 🔴 `section`, `media` slot."
+    },
+    "WALLET_BANNER_CTA": {
+      "type": "WALLET_BANNER_CTA",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "NUDGE"
+      ],
+      "primary_role": "NUDGE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/WALLET_BANNER_CTA.md",
+      "summary": "A banner showing the user's wallet balance and a CTA to use / earn more. Top-level",
+      "edit_safety_summary": "🟢 the brand-config copy that produces title / subtitle (edited at brand-config level, not here). · 🟡 wallet amounts (auto-injected; manual rewrite mis-states balance). · 🔴 `cta` actions (all routing)."
+    },
+    "YOUTUBE_CAROUSEL": {
+      "type": "YOUTUBE_CAROUSEL",
+      "pdp_relevance": "✓",
+      "narrative_roles": [
+        "SHOWCASE"
+      ],
+      "primary_role": "SHOWCASE",
+      "header_supported": true,
+      "layout_supported": true,
+      "spec_path": "widgets/YOUTUBE_CAROUSEL.md",
+      "summary": "A horizontal carousel of YouTube video cards — used for doctor explainers,",
+      "edit_safety_summary": "🟢 `items[].title`, `items[].subtitle`, custom `thumbnail` URLs, `playIcon`. · 🟡 expert / doctor names in `items[].channel` (authority claim). · 🔴 `items[].videoId` (YouTube ID — never auto-edit; wrong ID breaks the embed), `carouselConfig` / `sliderConfig` enums."
+    }
+  }
+}
