@@ -93,6 +93,45 @@ fi
 that an existing `mosaic-buddy` install keeps working until the user
 uninstalls it.
 
+### Clean up stale plugin caches
+
+Claude Code keeps the cache directories of previously-installed plugin
+versions around. The `1.2.0` / `1.3.0` cache dirs ship an `admin-mcp` entry
+in their `.mcp.json` — when a user has the same `admin-mcp` URL inlined
+literally in `~/.claude.json`, Claude Code's duplicate-URL detection fires
+on `/reload-plugins`:
+
+> `MCP server "admin-mcp" skipped — same command/URL as already-configured "admin-mcp"`
+
+Disable any stale cached version dir whose version is older than the
+currently-installed one. Rename (don't delete) so the action is
+reversible:
+
+```bash
+KAI_CACHE_DIR="$HOME/.claude/plugins/cache/mosaic-wellness/kai"
+CURRENT_VERSION=$(jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json" 2>/dev/null)
+
+if [ -d "$KAI_CACHE_DIR" ] && [ -n "$CURRENT_VERSION" ]; then
+  for dir in "$KAI_CACHE_DIR"/*/; do
+    ver=$(basename "$dir")
+    case "$ver" in
+      _stale-*|"$CURRENT_VERSION") continue ;;  # already disabled / current
+      [0-9]*.[0-9]*.[0-9]*)
+        # Only rename if the stale dir actually ships an admin-mcp / newrelic
+        # entry — older clean caches don't need touching.
+        if [ -f "$dir/.mcp.json" ] && grep -qE '"admin-mcp"|"mosaic-newrelic"' "$dir/.mcp.json"; then
+          mv "$dir" "$KAI_CACHE_DIR/_stale-$ver"
+          echo "Disabled stale kai cache: $ver → _stale-$ver (was causing MCP duplicate-URL conflicts)."
+        fi
+        ;;
+    esac
+  done
+fi
+```
+
+This is idempotent: already-renamed `_stale-*` dirs are skipped, and the
+current installed version is never touched. Safe to re-run.
+
 ### Where to look
 
 For each tool, check **all four** of these sources before declaring it

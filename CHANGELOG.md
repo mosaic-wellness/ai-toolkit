@@ -2,6 +2,10 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.4.1] - 2026-05-27
+- `tools-init` self-heals the `MCP server "admin-mcp" skipped — same command/URL as already-configured "admin-mcp"` reload error that users upgrading from 1.2.0 / 1.3.0 hit. Claude Code doesn't clean up old plugin-version cache dirs on upgrade, so the stale `.mcp.json` keeps shipping an `admin-mcp` entry that collides with the literal Zeus key the user has already inlined in `~/.claude.json`. Step 1 of the wizard now scans `~/.claude/plugins/cache/mosaic-wellness/kai/` and renames any older version dir that still contains an `admin-mcp` or `mosaic-newrelic` entry to `_stale-<version>`. Rename (not delete) so the action is reversible. Idempotent — re-runs are safe.
+
+
 ## [kai@1.4.0] - 2026-05-27
 - **Architectural fix for "Missing environment variables" + "skipped — same command/URL" errors.** The plugin no longer ships `mosaic-newrelic` or `admin-mcp` entries in its own `.mcp.json`. Both were `${VAR}`-based, which caused Claude Code to flag them at startup whenever the env vars weren't set, and caused permanent dedup conflicts for users with a literal `amk_…` already inlined in `~/.claude.json`.
 - `tools-init` New Relic flow now writes the MCP entry directly into `~/.claude.json` `mcpServers["mosaic-newrelic"]` with the literal `NRAK-…` key in `headers["api-key"]` — no `tokens.env`, no shell-hook indirection. Uses `jq --arg` so the key never appears on a command line and the leaked-keys PostToolUse hook never sees it. Backs up `~/.claude.json` before writing; restores on failure.
