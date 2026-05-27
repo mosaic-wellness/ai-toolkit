@@ -2,6 +2,12 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.5.2] - 2026-05-27
+- Simplify `firebase-mcp` detection to match `mixpanel-mcp` — just check the plugin's `.mcp.json` ships the entry. No more probing for auth files, refresh tokens, or CLI binaries. firebase-tools handles its own OAuth on first MCP call, exactly like `mcp-remote` does for Mixpanel.
+- 1.5.1's configstore-probe approach was an over-fit — the right question is "is the MCP configured?" not "is the user pre-authenticated?". Auth state is the MCP server's concern, not the wizard's.
+- Firebase flow no longer runs `firebase login` automatically; it prints that the first MCP call will trigger the browser OAuth. Users who want to pre-auth can still run `npx -y firebase-tools@latest login` themselves.
+
+
 ## [kai@1.5.1] - 2026-05-27
 - Fix `tools-init` falsely reporting `firebase-mcp` as "missing" when the user has authenticated but doesn't have `firebase-tools` globally installed. Detection now checks `~/.config/configstore/firebase-tools.json` for a refresh token instead of `command -v firebase`. The plugin's `.mcp.json` ships `npx -y firebase-tools@latest mcp`, so a global install was never required — only auth was.
 - Update Firebase setup flow + reference to use `npx -y firebase-tools@latest login` as the default, with `firebase login` shown as the shortcut for users who already have the CLI globally. Same auth file, same OAuth flow, no PATH pollution.
