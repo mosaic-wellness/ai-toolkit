@@ -14,14 +14,19 @@ description: >
 
 # Mosaic × Firebase
 
-Firebase auth uses the Firebase CLI's own login (`firebase login`) — there is
-no API token to manage. If `firebase_get_environment` returns
-`Authenticated User: <NONE>`, run `/kai tools-init firebase` to
-walk through the login flow.
+Firebase auth uses the Firebase CLI's own OAuth — there is no API token
+to manage. The plugin ships `npx -y firebase-tools@latest mcp` in
+`.mcp.json`, so the first time you ask Firebase a question, a browser
+tab opens for Google OAuth. Subsequent sessions refresh silently.
+
+If `firebase_get_environment` returns `Authenticated User: <NONE>`, run
+`npx -y firebase-tools@latest login` directly (or any Firebase question
+in Claude will re-trigger the browser flow). `/kai tools-init firebase`
+confirms the plugin entry is wired but does not run login itself.
 
 For the Mosaic-specific Firebase setup (which Google account to use, which
-projects you should see after `firebase login`, and the re-auth/logout
-flow), see [references/setup.md](references/setup.md).
+projects you should see after login, and the re-auth/logout flow), see
+[references/setup.md](references/setup.md).
 
 ---
 

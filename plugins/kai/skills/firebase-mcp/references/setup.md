@@ -17,21 +17,22 @@ This is different from Mixpanel/New Relic, which use long-lived API tokens.
 
 ## First-time setup
 
-```bash
-/kai tools-init firebase
-```
+The plugin's `.mcp.json` ships the `firebase-mcp` entry, so the MCP is
+already wired the moment kai is installed. No paste, no global install.
 
-The wizard runs `npx -y firebase-tools@latest login` (or `firebase login`
-if you already have the CLI globally installed), which:
+`/kai tools-init firebase` confirms the entry is present and tells you
+what to expect — it does **not** run login itself. OAuth happens
+on-demand: the first time you ask Firebase a question in Claude (or run
+`npx -y firebase-tools@latest login` yourself), firebase-tools opens a
+browser to:
 
-1. Opens your default browser to a Google OAuth consent screen.
-2. Asks you to sign in with your **`@mosaicwellness.in`** Google account
-   (this is the only account that has access to the Mosaic Firebase
-   projects).
-3. Asks for permission to access Firebase data on your behalf.
-4. Redirects back to a local listener; CLI prints a success banner.
+1. A Google OAuth consent screen.
+2. Sign in with your **`@mosaicwellness.in`** Google account (the only
+   account with access to the Mosaic Firebase projects).
+3. Grant permission to access Firebase data on your behalf.
+4. Redirect back to a local listener; CLI prints a success banner.
 
-The auth tokens are stored under `~/.config/configstore/firebase-tools.json`
+Auth tokens are stored under `~/.config/configstore/firebase-tools.json`
 (macOS/Linux). They refresh automatically; you typically log in once per
 machine.
 
@@ -39,8 +40,11 @@ machine.
 
 ## Verify
 
-After login, the wizard calls `firebase_list_projects` and checks for at
-least one known Mosaic project ID. Expected projects include:
+After your first Firebase MCP call, ask Claude:
+
+> "List Firebase projects I can see."
+
+You should get back at least one known Mosaic project ID:
 
 - `man-matters-android`
 - `be-bodywise`
@@ -51,10 +55,10 @@ least one known Mosaic project ID. Expected projects include:
 - `middle-east-a7a72`
 - `app-uninstall-tracking-aa55f`
 
-If your login succeeded but **none** of those appear, you're
-logged into the wrong Google account. Run
-`npx -y firebase-tools@latest logout` (or `firebase logout` if you have
-it globally) and try again with your `@mosaicwellness.in` address.
+If your login succeeded but **none** of those appear, you're logged into
+the wrong Google account. Run `npx -y firebase-tools@latest logout` (or
+`firebase logout` if you have it globally) and try again with your
+`@mosaicwellness.in` address.
 
 ---
 
