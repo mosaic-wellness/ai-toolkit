@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "mosaic-mixpanel": {
+    "mixpanel-mcp": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "mcp-remote", "https://mcp.mixpanel.com/mcp"]
     },
-    "mosaic-firebase": {
+    "firebase-mcp": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "firebase-tools@latest", "mcp"]

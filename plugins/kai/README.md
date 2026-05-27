@@ -35,10 +35,10 @@ Five MCPs ship wired in `.mcp.json` and are provisioned via `/kai tools-init`. A
 
 | MCP             | What it gives you                                       | Setup                                                                  |
 | --------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
-| mosaic-mixpanel | Org-wide Mixpanel events, funnels, retention            | `/kai tools-init` (Mixpanel Service Account token)                     |
-| mosaic-firebase | Firebase Crashlytics, Firestore, Remote Config          | `/kai tools-init` (runs `firebase login` OAuth)                        |
+| mixpanel-mcp    | Org-wide Mixpanel events, funnels, retention            | `/kai tools-init` (Mixpanel Service Account token)                     |
+| firebase-mcp    | Firebase Crashlytics, Firestore, Remote Config          | `/kai tools-init` (runs `firebase login` OAuth)                        |
 | kai-mcp         | Mosaic Kai orchestrator (CX, eng, analytics)            | Auto — Google OAuth on first call                                      |
-| mosaic-newrelic | NRQL, error logs, alerts                                | `/kai tools-init` (New Relic User API key)                             |
+| newrelic-mcp    | NRQL, error logs, alerts                                | `/kai tools-init` (New Relic User API key)                             |
 | admin-mcp       | Mosaic Wellness page configs (PDPs, widget pages, experiments, habit trackers), staging-only | `/kai tools-init` (admin dashboard API key, `amk_` prefix) |
 | Meta Ads (read-only) | Campaign / adset / ad performance, audiences, benchmarks | Claude Desktop → Settings → Connectors → Custom Connector. See [setup](skills/mosaic-meta-ads/references/setup.md). kai blocks all Meta write tools at the hook layer. |
 

@@ -164,9 +164,9 @@ Most performance questions involve more than Meta. When the user asks
 plugins:
 
 - **Meta** (this skill) — paid acquisition spend, CPM, ROAS, frequency
-- **mosaic-mixpanel** — on-site funnel (PDP → cart → checkout)
+- **mixpanel-mcp** — on-site funnel (PDP → cart → checkout)
 - **kai-mcp** — orders / refunds / CS tickets
-- **mosaic-newrelic** — site latency / errors
+- **newrelic-mcp** — site latency / errors
 
 If the funnel is clean but Meta CPM spiked or frequency capped, that's
 your story. Don't conclude from Meta alone.

@@ -1,5 +1,5 @@
 ---
-name: mosaic-newrelic
+name: newrelic-mcp
 description: >
   Use this skill for any New Relic question on Mosaic Wellness backend
   services — error logs, latency, error rate, throughput, traces, NRQL
@@ -28,7 +28,7 @@ There are **two paths** to NR from Claude inside the Mosaic stack:
    on your side. **This is the right default.**
 2. **Direct NR MCP** — for raw NRQL, alert configuration, dashboard
    management, or NR-specific tools Kai doesn't proxy. Requires the
-   `mosaic-newrelic` MCP server to be wired (set
+   `newrelic-mcp` MCP server to be wired (set
    `NEW_RELIC_API_KEY` via `/kai tools-init newrelic`) and
    knowledge of NR entity names.
 

@@ -2,6 +2,13 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.5.0] - 2026-05-27
+- **Breaking: standardized MCP server names to `<service>-mcp` convention.** `mosaic-mixpanel` → `mixpanel-mcp`, `mosaic-firebase` → `firebase-mcp`, `mosaic-newrelic` → `newrelic-mcp`. `kai-mcp` and `admin-mcp` were already aligned; `mosaic-meta-ads` is unchanged (skill-only, not an MCP).
+- Renamed corresponding skill folders to match: `skills/mosaic-mixpanel/` → `skills/mixpanel-mcp/`, `skills/mosaic-firebase/` → `skills/firebase-mcp/`, `skills/mosaic-newrelic/` → `skills/newrelic-mcp/`. Skill IDs you type change accordingly (e.g. `kai:mosaic-mixpanel` → `kai:mixpanel-mcp`).
+- Updated `.mcp.json`, README, CLAUDE.md, tools-init wizard table, and all skill cross-references to use the new names. tools-init still accepts `newrelic` as a legacy alternative name when detecting an existing user-level entry, so teammates who hand-rolled a `newrelic` server keep working.
+- **Action required for installed users:** `/plugin update kai` then `/reload-plugins`. MCP tool names rendered to Claude change (e.g. `mcp__mosaic-mixpanel__*` → `mcp__mixpanel-mcp__*`), but no manual config edits are needed — the plugin ships the new entries.
+
+
 ## [kai@1.4.1] - 2026-05-27
 - `tools-init` self-heals the `MCP server "admin-mcp" skipped — same command/URL as already-configured "admin-mcp"` reload error that users upgrading from 1.2.0 / 1.3.0 hit. Claude Code doesn't clean up old plugin-version cache dirs on upgrade, so the stale `.mcp.json` keeps shipping an `admin-mcp` entry that collides with the literal Zeus key the user has already inlined in `~/.claude.json`. Step 1 of the wizard now scans `~/.claude/plugins/cache/mosaic-wellness/kai/` and renames any older version dir that still contains an `admin-mcp` or `mosaic-newrelic` entry to `_stale-<version>`. Rename (not delete) so the action is reversible. Idempotent — re-runs are safe.
 

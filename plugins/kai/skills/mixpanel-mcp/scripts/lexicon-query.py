@@ -108,7 +108,7 @@ def resolve_lexicon(explicit: str | None) -> Path:
     die(
         "Could not locate Mosaic_events_mapped.json. Set "
         "$MOSAIC_LEXICON_JSON to its absolute path, or pass "
-        "--lexicon PATH. See the mosaic-mixpanel SKILL for the "
+        "--lexicon PATH. See the mixpanel-mcp SKILL for the "
         "canonical location (mosaic-meta-repo/docs/resources/mixpanel/lexicon/)."
     )
 
