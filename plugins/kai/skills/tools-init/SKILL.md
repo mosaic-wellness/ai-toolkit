@@ -149,7 +149,7 @@ Use `python3 -c '...'` to parse JSON safely (don't pipe through `grep`).
 | Tool | Mark ✓ when |
 |---|---|
 | `mixpanel-mcp` | The plugin's `.mcp.json` ships the entry. Always ✓ — Mixpanel uses OAuth via `mcp-remote`, no further check needed. |
-| `firebase-mcp` | `command -v firebase` succeeds (CLI handles auth; plugin ships the entry). |
+| `firebase-mcp` | The plugin's `.mcp.json` ships the entry. Always ✓ — runs via `npx -y firebase-tools@latest mcp` (no global install needed), and firebase-tools handles its own OAuth on first call. Same pattern as `mixpanel-mcp`. |
 | `newrelic-mcp` | `mcpServers.newrelic-mcp` (or `newrelic`) exists at user level (top-level OR per-project) **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
 | `admin-mcp` | `mcpServers.admin-mcp` exists at user level **and** has an `x-api-key` header that is either a literal `amk_…` value, or `${ADMIN_MCP_API_KEY}` with that env var resolved. |
 
@@ -167,7 +167,7 @@ reconcile against their own setup:
 Tool              Status        Source
 ────────────────  ────────────  ─────────────────────────────────
 mixpanel-mcp   ✓ ready       OAuth (no token; mcp-remote)
-firebase-mcp   ✓ ready       firebase CLI ($(which firebase))
+firebase-mcp   ✓ ready       npx -y firebase-tools@latest mcp (plugin .mcp.json)
 newrelic-mcp   ✗ missing     no api-key header / env var
 admin-mcp         ✓ ready       inlined amk_… in ~/.claude.json
 ```
@@ -341,28 +341,35 @@ ignores that env var.
 For the full walkthrough (which Google account, expected project list),
 read `${CLAUDE_PLUGIN_ROOT}/skills/firebase-mcp/references/setup.md`.
 
-1. The Firebase MCP uses the CLI's own auth — no token to paste.
-2. Tell the user: this opens a browser-based OAuth flow.
-3. Run `firebase login` via Bash. If the user is already logged in,
-   `firebase login --reauth` to refresh.
-4. **Live probe**: after login, the Firebase MCP's `firebase_get_environment`
-   should return a non-empty `Authenticated User`.
-5. **Verify org access**: call `firebase_list_projects` and confirm at
-   least one Mosaic-known project ID appears (e.g.
-   `man-matters-android`, `be-bodywise`, `our-little-joys`).
-6. No `tokens.env` line is needed for Firebase — note in the status table
-   "n/a (CLI auth)".
-7. **Quickstart**: print
+1. The plugin's `.mcp.json` ships the `firebase-mcp` entry, so Claude
+   Code already has it registered as long as the kai plugin is enabled.
+   No paste, no global install, no pre-flight auth check needed.
+2. Confirm the plugin entry exists by reading
+   `${CLAUDE_PLUGIN_ROOT}/.mcp.json` and grep'ing for `"firebase-mcp"`.
+   If missing, the plugin install is broken — print remediation steps
+   (uninstall + reinstall kai) and exit the flow as `error`.
+3. Tell the user: firebase-tools handles its own OAuth on first call,
+   exactly like Mixpanel's mcp-remote does. The first time Claude asks
+   firebase a question, a browser tab will open to authenticate them
+   into the Firebase CLI (writes to
+   `~/.config/configstore/firebase-tools.json`). Subsequent sessions
+   refresh silently.
+4. If the user wants to pre-authenticate before their first MCP call,
+   they can run `npx -y firebase-tools@latest login` themselves — but
+   it's optional. Don't run it automatically inside the wizard.
+5. **Quickstart**: print
 
    ```
    Try it (after Claude Code restart):
      "Show me crash-free users for Bodywise"
      "Which Android apps exist in the Little Joys Firebase project?"
    ```
-8. **Telemetry — at flow completion:**
-   - on success (`firebase login` OK + projects listed): `beacon_step firebase success`
-   - on user cancel / aborted login: `beacon_step firebase cancelled`
-   - on CLI error / no projects visible: `beacon_step firebase error`
+
+   The first call triggers firebase-tools' browser OAuth if the user
+   hasn't authenticated yet.
+6. **Telemetry — at flow completion:**
+   - plugin entry present, message printed: `beacon_step firebase success`
+   - plugin entry missing (broken install): `beacon_step firebase error`
 
 ### New Relic
 
