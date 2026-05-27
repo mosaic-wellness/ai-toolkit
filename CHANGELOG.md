@@ -2,6 +2,10 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.6.0] - 2026-05-27
+- Bumped from 1.5.2 to 1.6.0 (minor)
+
+
 ## [kai@1.5.2] - 2026-05-27
 - Simplify `firebase-mcp` detection to match `mixpanel-mcp` — just check the plugin's `.mcp.json` ships the entry. No more probing for auth files, refresh tokens, or CLI binaries. firebase-tools handles its own OAuth on first MCP call, exactly like `mcp-remote` does for Mixpanel.
 - 1.5.1's configstore-probe approach was an over-fit — the right question is "is the MCP configured?" not "is the user pre-authenticated?". Auth state is the MCP server's concern, not the wizard's.
