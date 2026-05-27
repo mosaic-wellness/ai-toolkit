@@ -20,21 +20,36 @@ reachable. Each server has a different auth model — the wizard's job is
 to detect what's already in place and only prompt for what's actually
 missing.
 
-| MCP | Auth model | What's needed |
+| MCP | Auth model | Where it's wired |
 |---|---|---|
-| `mosaic-mixpanel` | OAuth via `mcp-remote` | Just the entry. Browser pops on first MCP call. No token. |
-| `mosaic-firebase` | Firebase CLI auth | `firebase login`. No token. |
-| `mosaic-newrelic` | User API key | `NEW_RELIC_API_KEY` env var (or literal `api-key` header in user config). |
-| `admin-mcp` | Zeus `amk_` key | `ADMIN_MCP_API_KEY` env var (or literal `x-api-key` header in user config). |
+| `mosaic-mixpanel` | OAuth via `mcp-remote` | Plugin `.mcp.json` ships the entry. Browser pops on first MCP call. No paste. |
+| `mosaic-firebase` | Firebase CLI auth | Plugin `.mcp.json` ships the entry. `firebase login`. No paste. |
+| `mosaic-newrelic` | User API key (`NRAK-…`) | **User-level `~/.claude.json`.** Wizard pastes the key into `headers["api-key"]` as a literal. |
+| `admin-mcp` | Zeus key (`amk_…`) | **User-level `~/.claude.json`.** Wizard pastes the key into `headers["x-api-key"]` as a literal. |
 
-The plugin's own `.mcp.json` references `${NEW_RELIC_API_KEY}` and
-`${ADMIN_MCP_API_KEY}`. Either persist those via `~/.config/kai/tokens.env`
-(this wizard's default), OR keep a literal value in user-level
-`~/.claude.json` — both are accepted and the wizard treats either as ✓.
+### Why newrelic + admin-mcp live in user config (not the plugin)
 
-**Credentials live in `~/.config/kai/tokens.env`** (sourced from the
-user's shell rc via a single-line hook). The plugin never touches this file
-during updates.
+Earlier versions shipped both servers in `plugins/kai/.mcp.json` with
+`${VAR}` references and used a `~/.config/kai/tokens.env` + shell-hook
+indirection. That setup produced two consistent problems on real
+machines:
+
+1. Claude Code validated the `${VAR}` references at startup and showed
+   red `Missing environment variables: …` errors before the user had a
+   chance to run `tools-init`.
+2. Users who configured admin-mcp at user level (with a literal `amk_…`
+   in `~/.claude.json`) got a permanent `MCP server "admin-mcp" skipped
+   — same command/URL as already-configured` warning because the plugin
+   shipped a competing entry.
+
+Writing the entry into `~/.claude.json` with the literal key kills both
+classes of error. The plugin only ships MCP entries that need no user
+credentials.
+
+`~/.config/kai/tokens.env` and its shell hook are kept as a fallback
+for users who prefer env-var indirection (e.g. teams sharing a
+credentials volume), and for one-time migration from `mosaic-buddy`.
+The default path is to inline.
 
 ---
 
@@ -94,15 +109,15 @@ Use `python3 -c '...'` to parse JSON safely (don't pipe through `grep`).
 
 | Tool | Mark ✓ when |
 |---|---|
-| `mosaic-mixpanel` | An `mcpServers.mosaic-mixpanel` entry exists in user-level config **or** plugin `.mcp.json`. **No token check** — Mixpanel uses OAuth via `mcp-remote`. |
-| `mosaic-firebase` | `command -v firebase` succeeds **and** an `mcpServers.mosaic-firebase` entry exists. CLI handles auth. |
-| `mosaic-newrelic` | An `mcpServers.mosaic-newrelic` (or `newrelic`) entry exists at user level **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
-| `admin-mcp` | An `mcpServers.admin-mcp` entry exists at user level **and** has an `x-api-key` header that is either a literal `amk_…` value, or `${ADMIN_MCP_API_KEY}` with that env var resolved. |
+| `mosaic-mixpanel` | The plugin's `.mcp.json` ships the entry. Always ✓ — Mixpanel uses OAuth via `mcp-remote`, no further check needed. |
+| `mosaic-firebase` | `command -v firebase` succeeds (CLI handles auth; plugin ships the entry). |
+| `mosaic-newrelic` | `mcpServers.mosaic-newrelic` (or `newrelic`) exists at user level (top-level OR per-project) **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
+| `admin-mcp` | `mcpServers.admin-mcp` exists at user level **and** has an `x-api-key` header that is either a literal `amk_…` value, or `${ADMIN_MCP_API_KEY}` with that env var resolved. |
 
-Also compute `shell_hook_installed` (`~/.zshrc` / `~/.bashrc` contains the
-`kai/tokens.env` source line). It's only relevant for env-var-based
-credentials — if every token in use is inlined in `~/.claude.json`, the
-shell hook isn't needed and the table should show `n/a`.
+The shell-hook check (`~/.zshrc` / `~/.bashrc` containing the
+`kai/tokens.env` source line) is only relevant if the user picked the
+env-var fallback. For the default inline-in-`~/.claude.json` path, the
+hook is `n/a`.
 
 ### Status table
 
@@ -314,32 +329,60 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
 
 **Telemetry — at flow entry:** run `beacon_step newrelic started`.
 
+The wizard's default is to write the MCP entry directly into the user's
+`~/.claude.json` with the literal `NRAK-…` key in the `api-key` header.
+No env-var indirection, no `tokens.env`, no shell hook required.
+
 1. Print acquisition steps from
-   `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-newrelic/references/setup.md`. (Co-located
-   with the `mosaic-newrelic` skill that owns the credential.)
+   `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-newrelic/references/setup.md`.
 2. Offer to open the browser: `open https://one.newrelic.com/api-keys`.
 3. Ask for the User API key. Format check: must start with `NRAK-` and be
    ≥ 30 chars.
 4. **Live probe**: POST to `https://api.newrelic.com/graphql` with header
    `API-Key: <token>` and body
    `{"query": "{ actor { user { name email } accounts { id name } } }"}`.
-   - `200` + at least one account → green, show the account list to the
-     user and ask which one is "Mosaic Wellness"
+   - `200` + at least one account → green, show the account list and ask
+     which one is "Mosaic Wellness".
    - `200` but auth error in body → "token is valid format but rejected —
-     check region (EU vs US data centre)"
-   - other → show the raw response
-5. **Write**: append-or-replace `NEW_RELIC_API_KEY=` in `$TOKENS_FILE`.
-6. **Quickstart**: print
+     check region (EU vs US data centre)".
+   - other → show the raw response.
+5. **Write to `~/.claude.json`** (Step 5a — atomic user-config write).
+   Pass the key via `--arg`; never interpolate it directly into a shell
+   command. The Bash redirect goes to a temp file, never to stdout, so
+   the `check-leaked-keys.sh` PostToolUse hook does not see it.
+
+   ```bash
+   CLAUDE_JSON="$HOME/.claude.json"
+   BACKUP="$HOME/.claude.json.bak.$(date +%s)"
+   cp "$CLAUDE_JSON" "$BACKUP"
+
+   TMP=$(mktemp)
+   jq --arg key "$NRAK" '
+     .mcpServers["mosaic-newrelic"] = {
+       type: "http",
+       url: "https://mcp.newrelic.com/mcp/",
+       headers: { "api-key": $key }
+     }
+   ' "$CLAUDE_JSON" > "$TMP" && mv "$TMP" "$CLAUDE_JSON"
+
+   chmod 600 "$CLAUDE_JSON" 2>/dev/null || true
+   ```
+
+   If `jq` fails (malformed `~/.claude.json`, disk full, etc.), restore
+   from `$BACKUP` and report the error. Never leave a half-written file.
+6. Tell the user the entry was written and to restart Claude Code so the
+   new MCP loads.
+7. **Quickstart**: print
 
    ```
    Try it (after Claude Code restart):
      "What's the error rate on middleware in the last hour?"
      "Which Mosaic services have alerts firing right now?"
    ```
-7. **Telemetry — at flow completion:**
-   - on success (token written + probe green): `beacon_step newrelic success`
+8. **Telemetry — at flow completion:**
+   - on success (entry written + probe green): `beacon_step newrelic success`
    - on user cancel: `beacon_step newrelic cancelled`
-   - on probe failure / format check failure: `beacon_step newrelic error`
+   - on probe failure / write failure: `beacon_step newrelic error`
 
 ### Admin MCP
 
@@ -419,9 +462,31 @@ paste flow if no key is found OR the inlined key fails the probe.
    ```
 
    Optional sanity-only check (no auth): `curl -s -o /dev/null -w '%{http_code}\n' https://stg-admin-mcp.mosaicwellness.in/health` should return `200`. If that fails the server is down — surface the outage instead of telling the user their key is bad.
-6. **Write**: append-or-replace the `ADMIN_MCP_API_KEY=` line in
-   `$TOKENS_FILE` (Step 5 — atomic write).
-7. **Quickstart**: print
+6. **Write to `~/.claude.json`** (atomic user-config write). Same pattern
+   as the New Relic flow: back up, write via `jq --arg`, restore on
+   failure. The key is never echoed.
+
+   ```bash
+   CLAUDE_JSON="$HOME/.claude.json"
+   BACKUP="$HOME/.claude.json.bak.$(date +%s)"
+   cp "$CLAUDE_JSON" "$BACKUP"
+
+   TMP=$(mktemp)
+   jq --arg key "$AMK" '
+     .mcpServers["admin-mcp"] = {
+       type: "http",
+       url: "https://stg-admin-mcp.mosaicwellness.in/mcp",
+       headers: { "x-api-key": $key }
+     }
+   ' "$CLAUDE_JSON" > "$TMP" && mv "$TMP" "$CLAUDE_JSON"
+
+   chmod 600 "$CLAUDE_JSON" 2>/dev/null || true
+   ```
+
+   On `jq` failure, restore from `$BACKUP` and report.
+7. Tell the user the entry was written and to restart Claude Code so
+   admin-mcp loads.
+8. **Quickstart**: print
 
    ```
    Try it (after Claude Code restart):
@@ -429,14 +494,19 @@ paste flow if no key is found OR the inlined key fails the probe.
      "Search habit trackers in bw"
      "Show me the summer-sale landing page on Bodywise staging"
    ```
-8. **Telemetry — at flow completion:**
-   - on success (token written + probe green): `beacon_step admin-mcp success`
+9. **Telemetry — at flow completion:**
+   - on success (entry written + probe green): `beacon_step admin-mcp success`
    - on user cancel / paste-skipped: `beacon_step admin-mcp cancelled`
    - on probe failure / format check failure: `beacon_step admin-mcp error`
 
 ---
 
-## Step 4 — One-time shell hook
+## Step 4 — One-time shell hook (fallback path only)
+
+This step only runs when the user has opted into the env-var fallback
+(i.e. a token actually landed in `$TOKENS_FILE` this session). The
+default newrelic + admin-mcp flows write to `~/.claude.json` directly
+and don't need this hook at all — skip Step 4 entirely in that case.
 
 If `$TOKENS_FILE` was just created (didn't exist before this session),
 detect the user's shell:
@@ -467,7 +537,12 @@ Skip this step if the line is already present (idempotent re-run).
 
 ---
 
-## Step 5 — Atomic token file writes
+## Step 5 — Atomic token file writes (fallback path only)
+
+Default newrelic + admin-mcp flows write to `~/.claude.json` via `jq`
+(see each flow's "Write to `~/.claude.json`" block). This section
+applies only to the env-var fallback or to a user explicitly choosing
+`tokens.env` over inlining.
 
 When writing to `$TOKENS_FILE`:
 

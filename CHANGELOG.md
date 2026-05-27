@@ -2,6 +2,14 @@
 
 All notable version changes to plugins in this repository.
 
+## [kai@1.4.0] - 2026-05-27
+- **Architectural fix for "Missing environment variables" + "skipped — same command/URL" errors.** The plugin no longer ships `mosaic-newrelic` or `admin-mcp` entries in its own `.mcp.json`. Both were `${VAR}`-based, which caused Claude Code to flag them at startup whenever the env vars weren't set, and caused permanent dedup conflicts for users with a literal `amk_…` already inlined in `~/.claude.json`.
+- `tools-init` New Relic flow now writes the MCP entry directly into `~/.claude.json` `mcpServers["mosaic-newrelic"]` with the literal `NRAK-…` key in `headers["api-key"]` — no `tokens.env`, no shell-hook indirection. Uses `jq --arg` so the key never appears on a command line and the leaked-keys PostToolUse hook never sees it. Backs up `~/.claude.json` before writing; restores on failure.
+- `tools-init` admin-mcp flow same — writes literal `amk_…` into `~/.claude.json` `mcpServers["admin-mcp"]` `headers["x-api-key"]`. Existing inlined entries detected in Step 1 short-circuit the flow.
+- Plugin `.mcp.json` now only ships zero-credential MCPs: `mosaic-mixpanel` (OAuth via `mcp-remote`), `mosaic-firebase` (CLI auth), `kai-mcp` (public HTTP). Clean install no longer surfaces env-var validation errors.
+- `~/.config/kai/tokens.env` + shell-hook flow is retained as an opt-in fallback for env-var-based setups and one-time migration from `mosaic-buddy`. Steps 4 and 5 of the wizard are marked accordingly.
+
+
 ## [kai-dev@1.0.1] - 2026-05-27
 - Fix `block-destructive-git.sh` PreToolUse hook path. `hooks.json`, `agents/architect.md`, and `agents/builder.md` referenced `scripts/block-destructive-git.sh` as a relative path, which failed (`No such file or directory`) whenever the agent's cwd wasn't the plugin root. Now uses `bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-destructive-git.sh` to match the convention used by every other hook in this repo.
 
