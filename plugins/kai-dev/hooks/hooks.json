@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "scripts/block-destructive-git.sh"
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-destructive-git.sh"
           }
         ]
       }

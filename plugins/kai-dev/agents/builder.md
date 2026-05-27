@@ -11,7 +11,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "scripts/block-destructive-git.sh"
+          command: "bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-destructive-git.sh"
 ---
 
 You are a Builder agent. You implement code changes within the current repository following TDD and the project's own conventions.

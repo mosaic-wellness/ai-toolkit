@@ -14,12 +14,23 @@ description: >
 
 # tools-init — Setup Wizard
 
-This skill drives the persistent-credentials flow for kai's four
-shipped MCP servers needing tokens (`mosaic-mixpanel`, `mosaic-firebase`,
-`mosaic-newrelic`, `admin-mcp`). The plugin's own `.mcp.json` references
-`${MIXPANEL_SERVICE_ACCOUNT_TOKEN}`, `${NEW_RELIC_API_KEY}`, and
-`${ADMIN_MCP_API_KEY}` — this wizard's job is to make sure those env vars
-are set in a durable place that survives plugin updates.
+This skill makes sure kai's four shipped MCP servers (`mosaic-mixpanel`,
+`mosaic-firebase`, `mosaic-newrelic`, `admin-mcp`) are wired up and
+reachable. Each server has a different auth model — the wizard's job is
+to detect what's already in place and only prompt for what's actually
+missing.
+
+| MCP | Auth model | What's needed |
+|---|---|---|
+| `mosaic-mixpanel` | OAuth via `mcp-remote` | Just the entry. Browser pops on first MCP call. No token. |
+| `mosaic-firebase` | Firebase CLI auth | `firebase login`. No token. |
+| `mosaic-newrelic` | User API key | `NEW_RELIC_API_KEY` env var (or literal `api-key` header in user config). |
+| `admin-mcp` | Zeus `amk_` key | `ADMIN_MCP_API_KEY` env var (or literal `x-api-key` header in user config). |
+
+The plugin's own `.mcp.json` references `${NEW_RELIC_API_KEY}` and
+`${ADMIN_MCP_API_KEY}`. Either persist those via `~/.config/kai/tokens.env`
+(this wizard's default), OR keep a literal value in user-level
+`~/.claude.json` — both are accepted and the wizard treats either as ✓.
 
 **Credentials live in `~/.config/kai/tokens.env`** (sourced from the
 user's shell rc via a single-line hook). The plugin never touches this file
@@ -44,7 +55,10 @@ Read `$ARGUMENTS` (the text after `tools-init`). Subcommand options:
 
 ## Step 1 — Scan state (with auto-migration)
 
-Always run this first, regardless of subcommand.
+Always run this first, regardless of subcommand. Detection has to be
+broad enough to find credentials wherever the user already has them —
+otherwise the wizard tells someone with a working setup that they're
+"missing" everything.
 
 ```bash
 # Canonical tokens file
@@ -56,44 +70,61 @@ if [ -f "$LEGACY_FILE" ] && [ ! -f "$TOKENS_FILE" ]; then
   mkdir -p "$HOME/.config/kai"
   cp "$LEGACY_FILE" "$TOKENS_FILE"
   chmod 600 "$TOKENS_FILE"
-  # Tell the user we migrated; do NOT delete the legacy file —
-  # mosaic-buddy may still be installed alongside kai during the
-  # deprecation window.
   echo "Migrated tokens from $LEGACY_FILE → $TOKENS_FILE (legacy file kept in place)."
-fi
-
-# Read or initialize
-if [ -f "$TOKENS_FILE" ]; then
-  # parse KEY=value lines
 fi
 ```
 
 **Migration rule:** copy, never move. The legacy file stays in place so
 that an existing `mosaic-buddy` install keeps working until the user
-uninstalls it. After both kai and the new tokens file are validated, the
-user can manually remove `~/.config/mosaic-buddy/` if they want.
+uninstalls it.
 
-For each of the four tools, compute:
+### Where to look
 
-| Field | How |
+For each tool, check **all four** of these sources before declaring it
+missing:
+
+1. **`$TOKENS_FILE`** (`~/.config/kai/tokens.env`) — parse `KEY=value` lines.
+2. **Current shell env** — `$MIXPANEL_SERVICE_ACCOUNT_TOKEN` (legacy, harmless), `$NEW_RELIC_API_KEY`, `$ADMIN_MCP_API_KEY`.
+3. **User-level `~/.claude.json`** — both top-level `mcpServers.<name>` and any per-project `projects.<path>.mcpServers.<name>`. Inspect the `headers` / `env` fields for either a literal key or a `${VAR}` reference. A literal `amk_…` in `admin-mcp.headers["x-api-key"]` counts as ✓ even though `tokens.env` is empty.
+4. **Plugin `.mcp.json`** (`${CLAUDE_PLUGIN_ROOT}/.mcp.json`) — confirms the entry kai ships actually exists in case the user has a stale install.
+
+Use `python3 -c '...'` to parse JSON safely (don't pipe through `grep`).
+
+### Per-tool detection rules
+
+| Tool | Mark ✓ when |
 |---|---|
-| `token_present` | env var (in user's current shell OR `$TOKENS_FILE`) is non-empty and not a placeholder. For admin-mcp: `ADMIN_MCP_API_KEY` (must start with `amk_`). For firebase: shell_hook is n/a (CLI auth). |
-| `reachable` | `validate` probe succeeds (see Step 3). For admin-mcp: live `tools/list` JSON-RPC against `https://stg-admin-mcp.mosaicwellness.in/mcp`. |
-| `shell_hook_installed` | `~/.zshrc` or `~/.bashrc` contains the source line. Same hook for all token-based tools. |
+| `mosaic-mixpanel` | An `mcpServers.mosaic-mixpanel` entry exists in user-level config **or** plugin `.mcp.json`. **No token check** — Mixpanel uses OAuth via `mcp-remote`. |
+| `mosaic-firebase` | `command -v firebase` succeeds **and** an `mcpServers.mosaic-firebase` entry exists. CLI handles auth. |
+| `mosaic-newrelic` | An `mcpServers.mosaic-newrelic` (or `newrelic`) entry exists at user level **and** has an `api-key` header that is either a literal `NRAK-…` value, or `${NEW_RELIC_API_KEY}` with that env var resolved (via shell or `$TOKENS_FILE`). |
+| `admin-mcp` | An `mcpServers.admin-mcp` entry exists at user level **and** has an `x-api-key` header that is either a literal `amk_…` value, or `${ADMIN_MCP_API_KEY}` with that env var resolved. |
 
-Display the status table to the user:
+Also compute `shell_hook_installed` (`~/.zshrc` / `~/.bashrc` contains the
+`kai/tokens.env` source line). It's only relevant for env-var-based
+credentials — if every token in use is inlined in `~/.claude.json`, the
+shell hook isn't needed and the table should show `n/a`.
+
+### Status table
+
+Print a table that names where each credential was found so the user can
+reconcile against their own setup:
 
 ```
-Tool              Token       Reachable    Shell hook
-────────────────  ──────────  ───────────  ───────────────
-mosaic-mixpanel   ✓ present   ✓ 200        ✓
-mosaic-firebase   ✓ logged-in ✓            n/a (CLI auth)
-mosaic-newrelic   ✗ missing   —            ✓
-admin-mcp         ✓ present   ✓ 200        ✓
+Tool              Status        Source
+────────────────  ────────────  ─────────────────────────────────
+mosaic-mixpanel   ✓ ready       OAuth (no token; mcp-remote)
+mosaic-firebase   ✓ ready       firebase CLI ($(which firebase))
+mosaic-newrelic   ✗ missing     no api-key header / env var
+admin-mcp         ✓ ready       inlined amk_… in ~/.claude.json
 ```
 
-If every tool is green AND the subcommand was `setup` (or empty), print:
-`All four tools are set up and reachable. Nothing to do.` and exit.
+If a tool is ✓ but the `reachable` probe (Step 3 / `validate`) fails,
+show that as a separate `Reachable` column rather than overwriting the
+detection result.
+
+If every tool is ✓ AND the subcommand was `setup` (or empty), print:
+`All four tools are set up. Nothing to do.` and exit. Do not prompt for
+tokens the user already has.
 
 ---
 
@@ -202,40 +233,52 @@ treat that flow as `cancelled` for the relevant step.
 
 **Telemetry — at flow entry:** run `beacon_step mixpanel started`.
 
-1. Print the click-by-click acquisition steps by reading
-   `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-mixpanel/references/setup.md` and showing
-   the **"Get your token"** section verbatim. (The setup doc is co-located
-   with the `mosaic-mixpanel` skill that owns the credential.)
-2. Offer to open the browser: ask the user `Open https://mixpanel.com/settings/project for you? [Y/n]` — on `Y`, run
-   `open https://mixpanel.com/settings/project` (Bash).
-3. Call `AskUserQuestion` with a free-text "Other" option only:
-   `"Paste your Mixpanel Service Account token:"`. Header: `Mixpanel token`.
-4. **Format check** (cheap): must be ≥ 20 chars, no whitespace, no
-   placeholder pattern (`<PASTE`, `xxx`, `your-token`, etc.).
-5. **Live probe**: run a shell snippet that exports the token in-process and
-   hits `https://mixpanel.com/api/app/me` with HTTP Basic auth. Mixpanel SA
-   uses the token as username and an empty password, so the header value is
-   `Authorization: Basic <base64(token:)>` (for example:
-   `printf '%s:' "$TOKEN" | base64`). Decode:
-   - `200` → green, parse response to confirm org membership of Mosaic
-     Wellness (id `2242951`)
-   - `401` → "token rejected — wrong project or revoked"
-   - `403` → "token doesn't have the right scopes — needs Analyst on
-     Mosaic Wellness org"
-   - any other → show the raw response and let the user retry
-6. **Write**: append-or-replace the `MIXPANEL_SERVICE_ACCOUNT_TOKEN=` line
-   in `$TOKENS_FILE` (Step 5 — atomic write).
-7. **Quickstart**: print
+Mixpanel auth happens via OAuth in `mcp-remote` — there is **no token to
+paste**. The browser pops automatically on the first MCP call after a
+Claude Code restart, the user signs into Mixpanel, and `mcp-remote`
+caches the OAuth token in `~/.mcp-auth/`. The wizard's job here is just
+to confirm the entry is wired and tell the user what to expect.
+
+1. Confirm `mcpServers.mosaic-mixpanel` exists either in user-level
+   `~/.claude.json` (top-level or per-project) or in the plugin's
+   `.mcp.json`. If neither, print the suggested entry and offer to add
+   it to the top-level `~/.claude.json` for the user:
+
+   ```json
+   "mosaic-mixpanel": {
+     "type": "stdio",
+     "command": "npx",
+     "args": ["-y", "mcp-remote", "https://mcp.mixpanel.com/mcp"]
+   }
+   ```
+
+   Don't write anything else. Don't ask for a token.
+2. Tell the user:
+
+   > Mixpanel uses OAuth — no token to paste. After you restart Claude
+   > Code, the first Mixpanel MCP call will open a browser for you to
+   > sign in. The session is cached at `~/.mcp-auth/` and persists
+   > across restarts.
+
+3. (Optional) If they ask about the legacy Claude.ai-hosted Mixpanel MCP
+   (`claude_ai_Mixpanel_MCP_Mosaic`), note that it works the same way —
+   OAuth on first call — and either entry is fine.
+4. **Quickstart**: print
 
    ```
    Try it (after Claude Code restart):
      "Show MTU for Man Matters last 7 days"
      "What's the PDP → Cart conversion for Little Joys this month?"
    ```
-8. **Telemetry — at flow completion:**
-   - on success (token written + probe green): `beacon_step mixpanel success`
-   - on user cancel / paste-skipped: `beacon_step mixpanel cancelled`
-   - on probe failure / write failure: `beacon_step mixpanel error`
+5. **Telemetry — at flow completion:**
+   - on success (entry confirmed or added): `beacon_step mixpanel success`
+   - on user cancel: `beacon_step mixpanel cancelled`
+   - on write failure: `beacon_step mixpanel error`
+
+**Do not** prompt for `MIXPANEL_SERVICE_ACCOUNT_TOKEN`, write to
+`$TOKENS_FILE`, or probe `/api/app/me`. Those were carryovers from an
+earlier design where Mixpanel used a Service Account; `mcp-remote`
+ignores that env var.
 
 ### Firebase
 
@@ -301,6 +344,18 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
 ### Admin MCP
 
 **Telemetry — at flow entry:** run `beacon_step admin-mcp started`.
+
+**Short-circuit:** before prompting, re-check user-level `~/.claude.json`
+for an existing `mcpServers.admin-mcp` entry whose
+`headers["x-api-key"]` is a literal `amk_…` value (not `${…}`). If
+present, run the live probe (step 5 below) against that key. On 200,
+print:
+
+> Found a working admin-mcp key inlined in `~/.claude.json` — leaving
+> it as-is. Skip this flow.
+
+…and mark `beacon_step admin-mcp success`. Only fall through to the
+paste flow if no key is found OR the inlined key fails the probe.
 
 1. Tell the user this provisions an admin-dashboard API key (Zeus). The key
    format is `amk_...` and is used by the admin-mcp HTTP server at

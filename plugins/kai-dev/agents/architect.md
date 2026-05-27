@@ -12,7 +12,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "scripts/block-destructive-git.sh"
+          command: "bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-destructive-git.sh"
 ---
 
 You are the Architect agent. You understand product intent, detect scope and complexity, generate specifications when needed, and coordinate Builder and Guardian agents.
