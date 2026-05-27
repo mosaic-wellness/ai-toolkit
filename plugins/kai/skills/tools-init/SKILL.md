@@ -3,23 +3,23 @@ name: tools-init
 description: >
   Use this skill when the user wants to set up, validate, rotate, or
   remove API tokens for the kai-plugin MCPs (Mixpanel Service Account,
-  Firebase login, New Relic User API key). Triggers on: "set up
-  mixpanel", "configure firebase", "wire up new relic", "my token isn't
-  working", "set up tools", "rotate token", "tools-init", or any
-  first-time install / token rotation / credentials-debugging question
-  for kai-plugin MCPs. Saves tokens to
-  `~/.config/kai/tokens.env` and survives plugin updates.
+  Firebase login, New Relic User API key, admin-mcp API key). Triggers on:
+  "set up mixpanel", "configure firebase", "wire up new relic", "set up
+  admin-mcp", "configure admin api key", "my token isn't working", "set
+  up tools", "rotate token", "tools-init", or any first-time install /
+  token rotation / credentials-debugging question for kai-plugin MCPs.
+  Saves tokens to `~/.config/kai/tokens.env` and survives plugin updates.
   Idempotent — safe to re-run.
 ---
 
 # tools-init — Setup Wizard
 
-This skill drives the persistent-credentials flow for kai's three
-shipped MCP servers (`mosaic-mixpanel`, `mosaic-firebase`,
-`mosaic-newrelic`). The plugin's own `.mcp.json` references
-`${MIXPANEL_SERVICE_ACCOUNT_TOKEN}` and `${NEW_RELIC_API_KEY}` — this
-wizard's job is to make sure those env vars are set in a durable place that
-survives plugin updates.
+This skill drives the persistent-credentials flow for kai's four
+shipped MCP servers needing tokens (`mosaic-mixpanel`, `mosaic-firebase`,
+`mosaic-newrelic`, `admin-mcp`). The plugin's own `.mcp.json` references
+`${MIXPANEL_SERVICE_ACCOUNT_TOKEN}`, `${NEW_RELIC_API_KEY}`, and
+`${ADMIN_MCP_API_KEY}` — this wizard's job is to make sure those env vars
+are set in a durable place that survives plugin updates.
 
 **Credentials live in `~/.config/kai/tokens.env`** (sourced from the
 user's shell rc via a single-line hook). The plugin never touches this file
@@ -36,9 +36,9 @@ Read `$ARGUMENTS` (the text after `tools-init`). Subcommand options:
 | `(empty)` or `setup`        | Auto-scan + interactive wizard for any tool needing setup |
 | `status`                    | Read-only state table. No writes. |
 | `validate`                  | Probe live endpoints with current tokens. No writes. |
-| `mixpanel` / `firebase` / `newrelic` | Skip menu, go straight to that tool's flow |
-| `rotate <tool>`             | Replace existing token (back up old value first) |
-| `remove <tool>`             | Remove the tokens.env line + show user how to revoke at the vendor |
+| `mixpanel` / `firebase` / `newrelic` / `admin-mcp` | Skip menu, go straight to that tool's flow |
+| `rotate <tool>`             | Replace existing token (back up old value first). `<tool>` ∈ {mixpanel, firebase, newrelic, admin-mcp}. |
+| `remove <tool>`             | Remove the tokens.env line + show user how to revoke at the vendor. `<tool>` ∈ {mixpanel, firebase, newrelic, admin-mcp}. |
 
 ---
 
@@ -73,13 +73,13 @@ that an existing `mosaic-buddy` install keeps working until the user
 uninstalls it. After both kai and the new tokens file are validated, the
 user can manually remove `~/.config/mosaic-buddy/` if they want.
 
-For each of the three tools, compute:
+For each of the four tools, compute:
 
 | Field | How |
 |---|---|
-| `token_present` | env var (in user's current shell OR `$TOKENS_FILE`) is non-empty and not a placeholder |
-| `reachable` | `validate` probe succeeds (see Step 3) |
-| `shell_hook_installed` | `~/.zshrc` or `~/.bashrc` contains the source line |
+| `token_present` | env var (in user's current shell OR `$TOKENS_FILE`) is non-empty and not a placeholder. For admin-mcp: `ADMIN_MCP_API_KEY` (must start with `amk_`). For firebase: shell_hook is n/a (CLI auth). |
+| `reachable` | `validate` probe succeeds (see Step 3). For admin-mcp: live `tools/list` JSON-RPC against `https://stg-admin-mcp.mosaicwellness.in/mcp`. |
+| `shell_hook_installed` | `~/.zshrc` or `~/.bashrc` contains the source line. Same hook for all token-based tools. |
 
 Display the status table to the user:
 
@@ -89,10 +89,11 @@ Tool              Token       Reachable    Shell hook
 mosaic-mixpanel   ✓ present   ✓ 200        ✓
 mosaic-firebase   ✓ logged-in ✓            n/a (CLI auth)
 mosaic-newrelic   ✗ missing   —            ✓
+admin-mcp         ✓ present   ✓ 200        ✓
 ```
 
 If every tool is green AND the subcommand was `setup` (or empty), print:
-`All three tools are set up and reachable. Nothing to do.` and exit.
+`All four tools are set up and reachable. Nothing to do.` and exit.
 
 ---
 
@@ -101,11 +102,12 @@ If every tool is green AND the subcommand was `setup` (or empty), print:
 If subcommand is `setup` (or empty) AND there's anything to fix, call
 `AskUserQuestion` with multi-select options for the tools needing action.
 Each option's label is `Set up <tool>` or `Rotate <tool>` or
-`Re-verify <tool>`. Add a final option: `Just show me how — don't change
-anything`.
+`Re-verify <tool>`. Include `admin-mcp` alongside the other three (e.g.
+`Set up admin-mcp` / `Rotate admin-mcp` / `Re-verify admin-mcp`). Add a
+final option: `Just show me how — don't change anything`.
 
-If subcommand is a specific tool name (`mixpanel`, `firebase`, `newrelic`),
-skip the menu and run that tool's flow directly.
+If subcommand is a specific tool name (`mixpanel`, `firebase`, `newrelic`,
+`admin-mcp`), skip the menu and run that tool's flow directly.
 
 ---
 
@@ -122,7 +124,7 @@ on it, never surface its output:
 
 ```bash
 beacon_step() {
-  local step="$1"        # mixpanel | firebase | newrelic | validate | rotate | remove
+  local step="$1"        # mixpanel | firebase | newrelic | admin-mcp | validate | rotate | remove
   local outcome="$2"     # started | success | cancelled | error  (use "started" at flow entry)
   local url="${KAI_TELEMETRY_URL:-https://beacon-telemetry-production.up.railway.app/v2/ingest}"
   [ "$url" = "off" ] && return 0
@@ -295,6 +297,87 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/mosaic-firebase/references/setup.md`.
    - on success (token written + probe green): `beacon_step newrelic success`
    - on user cancel: `beacon_step newrelic cancelled`
    - on probe failure / format check failure: `beacon_step newrelic error`
+
+### Admin MCP
+
+**Telemetry — at flow entry:** run `beacon_step admin-mcp started`.
+
+1. Tell the user this provisions an admin-dashboard API key (Zeus). The key
+   format is `amk_...` and is used by the admin-mcp HTTP server at
+   `https://stg-admin-mcp.mosaicwellness.in/mcp` (via the `x-api-key`
+   header) for all PDP / widget page / experiment / habit operations.
+   admin-mcp is **staging-only** by design — production publishing goes
+   through the admin dashboard UI.
+2. Offer to open the browser: ask the user
+   `Open https://stg-zeus.mosaicwellness.in/admin/api_keys for you? [Y/n]`
+   — on `Y`, run `open https://stg-zeus.mosaicwellness.in/admin/api_keys`.
+   Tell them to create a key labeled `claude-code-<your-name>` (e.g.
+   `claude-code-hitesh`) so audit logs map back cleanly.
+3. Call `AskUserQuestion` with a free-text "Other" option only:
+   `"Paste your admin-mcp API key (amk_...):"`. Header: `Admin MCP key`.
+4. **Format check** (cheap):
+   - must start with `amk_`
+   - length ≥ 20
+   - no whitespace, no embedded newlines
+   - not a placeholder pattern (`<PASTE`, `xxx`, `amk_xxx`, `amk_your-key`)
+5. **Live probe.** Hit the MCP HTTP endpoint with a `tools/list` JSON-RPC
+   call. A 200 + JSON containing a `tools` array → green. 401 → key
+   rejected. Anything else → show the raw response.
+
+   ```bash
+   probe_admin_mcp() {
+     local token="$1"
+     local url="https://stg-admin-mcp.mosaicwellness.in/mcp"
+     local body='{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+     local resp http_code
+     resp=$(curl -s -w '\n__HTTP__:%{http_code}' \
+       -X POST \
+       -H 'Content-Type: application/json' \
+       -H 'Accept: application/json' \
+       -H "x-api-key: $token" \
+       --max-time 10 --connect-timeout 5 \
+       -d "$body" \
+       "$url" 2>/dev/null)
+     http_code=$(printf '%s' "$resp" | awk -F: '/^__HTTP__:/ {print $2}')
+     body=$(printf '%s' "$resp" | sed '/^__HTTP__:/d')
+     case "$http_code" in
+       200)
+         if printf '%s' "$body" | grep -q '"tools"'; then
+           echo "GREEN: admin-mcp reachable, tools array present"
+           return 0
+         fi
+         echo "AMBER: 200 but no tools array — server may be misconfigured"
+         echo "$body" | head -c 500
+         return 2
+         ;;
+       401|403)
+         echo "RED: key rejected ($http_code) — token invalid or revoked"
+         return 1
+         ;;
+       *)
+         echo "RED: unexpected HTTP $http_code"
+         echo "$body" | head -c 500
+         return 1
+         ;;
+     esac
+   }
+   ```
+
+   Optional sanity-only check (no auth): `curl -s -o /dev/null -w '%{http_code}\n' https://stg-admin-mcp.mosaicwellness.in/health` should return `200`. If that fails the server is down — surface the outage instead of telling the user their key is bad.
+6. **Write**: append-or-replace the `ADMIN_MCP_API_KEY=` line in
+   `$TOKENS_FILE` (Step 5 — atomic write).
+7. **Quickstart**: print
+
+   ```
+   Try it (after Claude Code restart):
+     "List widget pages for mm"
+     "Search habit trackers in bw"
+     "Show me the summer-sale landing page on Bodywise staging"
+   ```
+8. **Telemetry — at flow completion:**
+   - on success (token written + probe green): `beacon_step admin-mcp success`
+   - on user cancel / paste-skipped: `beacon_step admin-mcp cancelled`
+   - on probe failure / format check failure: `beacon_step admin-mcp error`
 
 ---
 

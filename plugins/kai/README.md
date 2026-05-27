@@ -25,11 +25,13 @@ After that, run `/kai` in any project for the day-to-day commands (audits, revie
 
 > **Migrating from `mosaic-buddy`?** After installing kai, run **`/kai migrate`**. It copies your tokens from `~/.config/mosaic-buddy/tokens.env` to `~/.config/kai/tokens.env`, prints the `/mosaic-buddy → /kai` command-mapping table, and tells you the exact `/plugin uninstall mosaic-buddy` step. Idempotent — the legacy file is left in place so you can uninstall on your own schedule.
 
+> **Migrating from `mosaic-admin`?** Run **`/kai migrate`** — it now also detects the retired `mosaic-admin` plugin and prints the `/mosaic-admin → /kai admin` command-mapping table. The admin-mcp API key uses the same env var (`ADMIN_MCP_API_KEY`) as before; kai reads it from `~/.config/kai/tokens.env`. Run `/kai tools-init admin-mcp` if you need to (re-)provision it.
+
 ---
 
 ## Mosaic MCPs
 
-Four MCPs ship wired in `.mcp.json` and are provisioned via `/kai tools-init`. A fifth (Meta Ads) is set up separately through Claude Desktop because Meta's OAuth doesn't work via JSON config.
+Five MCPs ship wired in `.mcp.json` and are provisioned via `/kai tools-init`. A sixth (Meta Ads) is set up separately through Claude Desktop because Meta's OAuth doesn't work via JSON config.
 
 | MCP             | What it gives you                                       | Setup                                                                  |
 | --------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -37,9 +39,10 @@ Four MCPs ship wired in `.mcp.json` and are provisioned via `/kai tools-init`. A
 | mosaic-firebase | Firebase Crashlytics, Firestore, Remote Config          | `/kai tools-init` (runs `firebase login` OAuth)                        |
 | kai-mcp         | Mosaic Kai orchestrator (CX, eng, analytics)            | Auto — Google OAuth on first call                                      |
 | mosaic-newrelic | NRQL, error logs, alerts                                | `/kai tools-init` (New Relic User API key)                             |
+| admin-mcp       | Mosaic Wellness page configs (PDPs, widget pages, experiments, habit trackers), staging-only | `/kai tools-init` (admin dashboard API key, `amk_` prefix) |
 | Meta Ads (read-only) | Campaign / adset / ad performance, audiences, benchmarks | Claude Desktop → Settings → Connectors → Custom Connector. See [setup](skills/mosaic-meta-ads/references/setup.md). kai blocks all Meta write tools at the hook layer. |
 
-Token storage for the first four: `~/.config/kai/tokens.env` (chmod 600, plugin updates never overwrite it). Meta tokens are stored by Claude Desktop, not on disk.
+Token storage for the first five: `~/.config/kai/tokens.env` (chmod 600, plugin updates never overwrite it). Meta tokens are stored by Claude Desktop, not on disk. admin-mcp writes are staging-only by design; production publishing uses the admin dashboard UI.
 
 ---
 
@@ -59,9 +62,25 @@ Token storage for the first four: `~/.config/kai/tokens.env` (chmod 600, plugin 
 | "Fork or resume a sidequest" | Same pattern — creates a fork snapshot if the name is new, resumes the saved one if it exists | `/kai sidequest <name>` |
 | "Tell the team how it's going" | Quick rating + title + details, lands in the kai dashboard | `/kai feedback` |
 | "How am I doing with Claude?" | Coaching report that finds your superpowers and time sinks | `/kai 5x` or `10x` |
-| "Wire up Mixpanel / Firebase / NR" | Interactive wizard to mint, validate, and persist API tokens to `~/.config/kai/tokens.env` | `/kai tools-init` |
+| "Wire up Mixpanel / Firebase / NR / admin-mcp" | Interactive wizard to mint, validate, and persist API tokens to `~/.config/kai/tokens.env` | `/kai tools-init` |
+| "Update a page config" | Edit PDPs, widget pages, run experiments — staging | `/kai admin` |
+| "Manage habit trackers" | Create, clone, edit, map/unmap habit tasks & trackers across 7 brands | `/kai habit` |
 
 Or just run **`/kai`** with no arguments to see an interactive menu.
+
+---
+
+## Admin & Habit (auto-triggered)
+
+You don't need to type `/kai admin` or `/kai habit` to get the admin / habit specialists. The `admin-essentials`, `bulk-operations`, `habit-essentials`, and `habit-workflows` skills auto-activate whenever you mention page configs, PDPs, widget pages, experiments, brand settings, habit trackers, habit tasks, or any habit_* / admin-mcp tool surface. Just describe what you want to do in plain language and kai picks the right specialist.
+
+The explicit slash routes are still useful when you want to skip directly to a flow:
+
+- `/kai admin` — page-config work (PDPs, widget pages, experiments). Spawns `page-editor`, `page-builder`, or `experiment-manager` based on your intent.
+- `/kai habit` — habit trackers and tasks. Spawns `habit-author` with the full 15-recipe playbook (R1 browse → R15 audit).
+- `/kai tools-init admin-mcp` — provision the admin dashboard API key (`amk_...`) and validate it against staging.
+
+admin-mcp writes are staging-only by design. Production publishing goes through the admin dashboard UI at Zeus.
 
 ---
 

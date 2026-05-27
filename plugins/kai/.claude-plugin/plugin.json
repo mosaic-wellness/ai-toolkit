@@ -1,7 +1,7 @@
 {
   "name": "kai",
-  "version": "1.1.0",
-  "description": "Mosaic Wellness internal-tooling co-pilot — wires Mixpanel, Firebase, New Relic, and the Kai orchestrator MCPs with brand-aware, context-rich skills. Ships an interactive token wizard (tools-init) that provisions credentials durably to ~/.config/kai/tokens.env.",
+  "version": "1.2.0",
+  "description": "Mosaic Wellness internal-tooling co-pilot — wires Mixpanel, Firebase, New Relic, the Kai orchestrator, and admin-mcp (page configs, PDPs, widget pages, experiments, habit trackers) with brand-aware, context-rich skills. Ships an interactive token wizard (tools-init) that provisions credentials durably to ~/.config/kai/tokens.env.",
   "author": {
     "name": "Mosaic Wellness",
     "url": "https://github.com/mosaic-wellness"
@@ -15,6 +15,9 @@
     "firebase",
     "newrelic",
     "mcp",
-    "tools-init"
+    "tools-init",
+    "admin-mcp",
+    "pdp",
+    "habit"
   ]
 }

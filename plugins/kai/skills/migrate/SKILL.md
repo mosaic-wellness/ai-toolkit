@@ -1,18 +1,20 @@
 ---
 name: migrate
 description: >
-  Migrate a teammate from the retired `mosaic-buddy` plugin to `kai`.
-  Detects legacy state on disk, copies tokens to the new path, shows the
-  command-mapping table, and gives the exact `/plugin uninstall` command
-  to drop mosaic-buddy. Idempotent — safe to re-run; harmless if no
-  legacy state is found.
+  Migrate a teammate from the retired `mosaic-buddy` and/or `mosaic-admin`
+  plugins to `kai`. Detects legacy state on disk, copies tokens to the new
+  path, shows the command-mapping tables for both retired plugins, and
+  gives the exact `/plugin uninstall` commands to drop them. Idempotent
+  — safe to re-run; harmless if no legacy state is found.
 ---
 
-# Migrate — mosaic-buddy → kai
+# Migrate — mosaic-buddy & mosaic-admin → kai
 
-The `mosaic-buddy` plugin is retired. Everything it did now lives in `kai`,
-plus the new MCP wiring and `tools-init` wizard. This skill walks a user
-through the switch in one pass.
+Both the `mosaic-buddy` plugin (technical co-pilot, retired in kai 1.0)
+and the `mosaic-admin` plugin (page-config + experiment tooling, retired
+in kai 1.2.0) are now folded into `kai`, plus the new MCP wiring and
+`tools-init` wizard. This skill walks a user through the switch in one
+pass — it handles whichever (or both) legacy plugins are installed.
 
 The migration is **not destructive**:
 
@@ -60,21 +62,33 @@ if [ -f "$HOME/.claude.json" ]; then
     MB_INSTALLED="no"
   fi
 fi
+
+# 5. Is mosaic-admin still installed?
+MA_INSTALLED="unknown"
+if [ -f "$HOME/.claude.json" ]; then
+  if grep -q '"mosaic-admin"' "$HOME/.claude.json" 2>/dev/null; then
+    MA_INSTALLED="yes"
+  else
+    MA_INSTALLED="no"
+  fi
+fi
 ```
 
 Print the detected state to the user as a compact table — same shape as
 `tools-init status`:
 
 ```
-mosaic-buddy state
-──────────────────────────────────────────
-Legacy tokens file      ✓ found / ✗ none
-Kai tokens file         ✓ found / ✗ none
-Legacy shell-rc hook    ✓ present / ✗ none
-mosaic-buddy installed  ✓ yes / ✗ no / ? unknown
+Legacy plugin state
+──────────────────────────────────────────────
+Legacy tokens file        ✓ found / ✗ none
+Kai tokens file           ✓ found / ✗ none
+Legacy shell-rc hook      ✓ present / ✗ none
+mosaic-buddy installed    ✓ yes / ✗ no / ? unknown
+mosaic-admin installed    ✓ yes / ✗ no / ? unknown
 ```
 
-If **everything** is "none / no", say so and stop:
+If **everything** is "none / no" (no legacy tokens, no shell hook, neither
+plugin installed), say so and stop:
 `Nothing to migrate — you're already on kai.`
 
 ---
@@ -128,8 +142,27 @@ Command mapping — mosaic-buddy → kai
 /mosaic-buddy help                  → /kai help
 
 NEW in kai (was not in mosaic-buddy):
-/kai tools-init      Wire Mixpanel / Firebase / New Relic MCPs
+/kai tools-init      Wire Mixpanel / Firebase / New Relic / admin-mcp MCPs
 /kai migrate         This command
+/kai admin           Page configs (PDPs, widgets, experiments)
+/kai habit           Habit trackers & tasks (kai 1.2.0+)
+```
+
+If `MA_INSTALLED` is `yes` or `unknown`, also print this mapping:
+
+```
+Command mapping — mosaic-admin → kai
+──────────────────────────────────────────────────────
+/mosaic-admin                       → /kai admin
+/mosaic-admin setup                 → /kai tools-init admin-mcp
+/mosaic-admin update <url>          → /kai admin update <url>
+/mosaic-admin add widget to <page>  → /kai admin add widget to <page>
+/mosaic-admin check experiments     → /kai admin experiments
+/mosaic-admin create page           → /kai admin create
+/mosaic-admin clone page            → /kai admin clone
+
+NEW in kai 1.2.0:
+/kai habit                          Habit trackers & tasks (admin-mcp habit_* tools)
 ```
 
 ---
@@ -163,6 +196,34 @@ If `MB_INSTALLED=no`, say:
 
 ---
 
+## Step 4b — Uninstall mosaic-admin
+
+Tell the user (only if `MA_INSTALLED` is `yes` or `unknown`):
+
+> To remove the retired `mosaic-admin` plugin and stop the duplicate
+> `/mosaic-admin` command, run:
+>
+> ```
+> /plugin uninstall mosaic-admin
+> ```
+>
+> All `mosaic-admin` capability now lives under `/kai admin` (PDPs,
+> widget pages, experiments) and `/kai habit` (habit trackers — new in
+> kai 1.2.0). The `admin-essentials`, `bulk-operations`, `habit-essentials`,
+> and `habit-workflows` skills auto-activate when you mention
+> PDP / widget / experiment / habit work, so most users don't need a
+> slash command at all.
+>
+> If you had the admin-mcp API key set up under `mosaic-admin`, it's
+> the same key — kai reads `ADMIN_MCP_API_KEY` from
+> `~/.config/kai/tokens.env`. Run `/kai tools-init admin-mcp` if you
+> need to re-provision it.
+
+If `MA_INSTALLED=no`, say:
+`mosaic-admin is already uninstalled — nothing to do here.`
+
+---
+
 ## Step 5 — Final status
 
 Print a closing summary:
@@ -170,10 +231,16 @@ Print a closing summary:
 ```
 ✓ Migration complete
 
+Detected legacy plugins:
+  mosaic-buddy:  {yes|no|unknown}
+  mosaic-admin:  {yes|no|unknown}
+
 Next:
   • Run /kai tools-init to wire (or re-validate) Mosaic MCPs
+    (now includes admin-mcp — needs an ADMIN_MCP_API_KEY beginning with `amk_`)
   • Run /kai to see the menu
-  • Tell the team — anyone else on mosaic-buddy should run /kai migrate
+  • Run /kai admin or /kai habit for page-config / habit work
+  • Tell the team — anyone else on mosaic-buddy OR mosaic-admin should run /kai migrate
 ```
 
 If anything was skipped (e.g. both token files exist, user must merge

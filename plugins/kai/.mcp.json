@@ -23,6 +23,13 @@
       "headers": {
         "api-key": "${NEW_RELIC_API_KEY}"
       }
+    },
+    "admin-mcp": {
+      "type": "http",
+      "url": "https://stg-admin-mcp.mosaicwellness.in/mcp",
+      "headers": {
+        "x-api-key": "${ADMIN_MCP_API_KEY}"
+      }
     }
   }
 }
