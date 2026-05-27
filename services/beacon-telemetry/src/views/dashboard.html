@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kai Telemetry</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #0d0e12; color: #e7e8ee; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  a { color: #7c6cff; text-decoration: none; }
+  a:hover { color: #a397ff; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 40px 64px; }
+
+  .header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+  .header .sub { color: #9b9eaa; font-size: 13px; margin-top: 4px; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .tabs { display: inline-flex; gap: 4px; background: #16181e; border: 1px solid #22242c; padding: 4px; border-radius: 8px; }
+  .tabs button { background: transparent; border: 0; color: #9b9eaa; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .tabs button:hover { color: #e7e8ee; }
+  .tabs button.active { background: #7c6cff; color: #fff; }
+
+  .card { background: #16181e; border: 1px solid #22242c; border-radius: 12px; padding: 24px; }
+  .card h2 { font-size: 11px; font-weight: 600; color: #9b9eaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+  .card .subtitle { color: #6b6e7a; font-size: 12px; margin-top: -10px; margin-bottom: 16px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .kpi { background: #16181e; border: 1px solid #22242c; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .kpi .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9b9eaa; font-weight: 600; }
+  .kpi .value { font-size: 30px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+  .kpi .spark { height: 36px; margin-top: 4px; }
+  .kpi .spark svg { width: 100%; height: 100%; display: block; }
+
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .funnel { display: flex; flex-direction: column; gap: 14px; }
+  .funnel-row .meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .funnel-row .label { font-size: 13px; color: #e7e8ee; }
+  .funnel-row .users { font-size: 12px; color: #9b9eaa; }
+  .funnel-row .users strong { color: #fff; font-weight: 600; }
+  .funnel-track { height: 28px; background: #1f2128; border-radius: 6px; overflow: hidden; }
+  .funnel-fill { height: 100%; background: linear-gradient(90deg, #7c6cff 0%, #5b4dd4 100%); border-radius: 6px; transition: width 0.5s ease; }
+  .funnel-drop { font-size: 11px; color: #ff8a73; margin-top: 4px; padding-left: 8px; }
+  .funnel-drop.first { visibility: hidden; }
+
+  .bar-list { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; }
+  .bar-row .name { font-size: 12px; color: #e7e8ee; flex: 0 0 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .track { flex: 1; height: 20px; background: #1f2128; border-radius: 4px; overflow: hidden; }
+  .bar-row .fill { height: 100%; background: #7c6cff; border-radius: 4px; transition: width 0.4s ease; }
+  .bar-row .count { font-size: 12px; color: #9b9eaa; flex: 0 0 40px; text-align: right; }
+
+  .bucket { margin-bottom: 18px; }
+  .bucket:last-child { margin-bottom: 0; }
+  .bucket-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .bucket-title { font-size: 11px; color: #7c6cff; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .bucket-count { font-size: 11px; color: #6b6e7a; }
+  .bucket .bar-row .name { flex: 0 0 160px; }
+
+  .chip { display: inline-block; padding: 4px 10px; border-radius: 6px; background: rgba(124, 108, 255, 0.18); color: #fff; font-size: 11px; font-weight: 500; line-height: 1.4; margin-right: 4px; margin-bottom: 4px; }
+  .chip.muted { background: #1f2128; color: #9b9eaa; }
+
+  .stack-row { margin-bottom: 14px; }
+  .stack-row:last-child { margin-bottom: 0; }
+  .stack-row .name { font-size: 13px; color: #e7e8ee; margin-bottom: 6px; text-transform: capitalize; }
+  .stack-track { display: flex; height: 24px; border-radius: 6px; overflow: hidden; background: #1f2128; }
+  .stack-track .seg { height: 100%; transition: width 0.4s ease; }
+  .seg.success { background: #5fd49a; }
+  .seg.cancelled { background: #f5b06a; }
+  .seg.errored { background: #ff7e6d; }
+  .stack-row .legend { display: flex; gap: 14px; margin-top: 6px; font-size: 11px; color: #9b9eaa; }
+  .stack-row .legend span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .stack-row .legend .lg-s::before { background: #5fd49a; }
+  .stack-row .legend .lg-c::before { background: #f5b06a; }
+  .stack-row .legend .lg-e::before { background: #ff7e6d; }
+
+  .heatmap-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .heatmap { display: grid; grid-auto-flow: column; gap: 2px; }
+  .heatmap-row { display: flex; flex-direction: column; gap: 2px; }
+  .heatmap-cell { width: 12px; height: 12px; border-radius: 2px; background: #1f1f2e; cursor: pointer; transition: outline 0.1s; }
+  .heatmap-cell:hover { outline: 1px solid #7c6cff; outline-offset: 1px; }
+  .hm-0 { background: #1f1f2e; }
+  .hm-1 { background: #2e2c52; }
+  .hm-2 { background: #4a3fa8; }
+  .hm-3 { background: #6655e0; }
+  .hm-4 { background: #7c6cff; }
+  .heatmap-meta { display: flex; gap: 16px; margin-bottom: 14px; align-items: center; }
+  .heatmap-users { display: flex; flex-direction: column; gap: 2px; padding-right: 12px; }
+  .heatmap-user-label { font-size: 11px; color: #9b9eaa; height: 12px; line-height: 12px; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+  .heatmap-container { display: flex; }
+  .heatmap-legend { display: flex; gap: 4px; align-items: center; font-size: 11px; color: #9b9eaa; margin-left: auto; }
+  .heatmap-legend .swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #9b9eaa; padding: 10px 12px; text-align: left; border-bottom: 1px solid #22242c; font-weight: 600; cursor: pointer; user-select: none; }
+  thead th:hover { color: #e7e8ee; }
+  thead th.sorted::after { content: ' \25BE'; color: #7c6cff; }
+  tbody td { padding: 12px; font-size: 12px; color: #e7e8ee; border-bottom: 1px solid #1a1c22; vertical-align: top; }
+  tbody tr:hover td { background: #1a1c22; }
+  td.user { color: #fff; font-weight: 500; }
+  td.dim { color: #9b9eaa; }
+  td.chips { max-width: 320px; }
+
+  .feed { display: flex; flex-direction: column; gap: 0; }
+  .feed-row { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid #1a1c22; align-items: center; font-size: 12px; }
+  .feed-row:last-child { border-bottom: 0; }
+  .feed-row .when { color: #6b6e7a; flex: 0 0 80px; font-variant-numeric: tabular-nums; }
+  .feed-row .who { color: #fff; flex: 0 0 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed-row .where { color: #9b9eaa; flex: 0 0 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed-row .what { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .feed-row .ev { font-size: 11px; color: #6b6e7a; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .empty { color: #6b6e7a; font-size: 13px; padding: 24px 0; text-align: center; }
+
+  .filter-banner { background: rgba(124, 108, 255, 0.12); border: 1px solid rgba(124, 108, 255, 0.35); color: #c1b8ff; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; align-items: center; justify-content: space-between; gap: 12px; }
+  .filter-banner.show { display: flex; }
+  .filter-banner button { background: transparent; border: 1px solid rgba(124, 108, 255, 0.4); color: #c1b8ff; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: inherit; }
+  .filter-banner button:hover { background: rgba(124, 108, 255, 0.15); }
+
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .wrap { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1>Kai Telemetry</h1>
+      <div class="sub">Plugin usage across the team</div>
+    </div>
+    <div class="header-right">
+      <div class="tabs" id="tabs"></div>
+      <a id="feedback-link" href="#">View feedback &rarr;</a>
+    </div>
+  </div>
+
+  <div id="filter-banner" class="filter-banner">
+    <span id="filter-text"></span>
+    <button id="filter-clear">Clear</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="stack">
+    <div class="card">
+      <h2>Adoption Funnel</h2>
+      <div class="subtitle">Drop-off between stages over the selected window</div>
+      <div id="funnel" class="funnel"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h2>Commands</h2>
+        <div class="subtitle">Grouped by bucket</div>
+        <div id="commands"></div>
+      </div>
+      <div class="card">
+        <h2>Agents Leaderboard</h2>
+        <div class="subtitle">Most-spawned kai agents</div>
+        <div id="agents"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tools-init Breakdown</h2>
+      <div class="subtitle">Outcomes per MCP setup step</div>
+      <div id="tools-init"></div>
+    </div>
+
+    <div class="card">
+      <h2>Activity Heatmap</h2>
+      <div class="subtitle">Click a cell to filter the recent feed</div>
+      <div class="heatmap-meta">
+        <div class="heatmap-legend">
+          <span>less</span>
+          <span class="swatch hm-0"></span>
+          <span class="swatch hm-1"></span>
+          <span class="swatch hm-2"></span>
+          <span class="swatch hm-3"></span>
+          <span class="swatch hm-4"></span>
+          <span>more</span>
+        </div>
+      </div>
+      <div id="heatmap-wrap" class="heatmap-wrap"></div>
+    </div>
+
+    <div class="card">
+      <h2>Users</h2>
+      <div class="subtitle">Click a column to sort</div>
+      <div id="users"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recent Activity</h2>
+      <div class="subtitle">Last 50 events</div>
+      <div id="recent" class="feed"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BUCKETS = {
+    Setup:    /^(tools-init\.|token-usage-guardrails$)/,
+    Audit:    /^(doctor|review|review-stack|ux|grillme)$/,
+    Build:    /^(brainstorm|document|debug)$/,
+    Session:  /^(handoff|sidequest)$/,
+    Coaching: /^(5x|10x)$/,
+    Meta:     /^(help|recommendations|feedback|)$/
+  };
+  var BUCKET_ORDER = ['Setup', 'Audit', 'Build', 'Session', 'Coaching', 'Meta'];
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
+  var state = {
+    days: 30,
+    token: new URLSearchParams(window.location.search).get('token') || '',
+    sort: { key: 'last_seen', dir: 'desc' },
+    filter: null,
+    rawRecent: [],
+    rawUsers: []
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    }
+    if (kids != null) {
+      if (Array.isArray(kids)) kids.forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+      else if (typeof kids === 'string') e.textContent = kids;
+      else e.appendChild(kids);
+    }
+    return e;
+  }
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(SVGNS, tag);
+    if (attrs) for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function tokenQS() {
+    var p = new URLSearchParams();
+    if (state.token) p.set('token', state.token);
+    return p.toString();
+  }
+  function fmtNum(n) { if (n == null) return '0'; if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k'; return String(n); }
+  function fmtDate(s) { if (!s) return '-'; var d = new Date(s); if (isNaN(d)) return s; return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+  function timeAgo(ts) {
+    var d = new Date(ts);
+    var s = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm';
+    if (s < 86400) return Math.floor(s / 3600) + 'h';
+    return Math.floor(s / 86400) + 'd';
+  }
+
+  function fetchJson(path) {
+    var sep = path.indexOf('?') === -1 ? '?' : '&';
+    return fetch(path + sep + tokenQS()).then(function (r) {
+      if (!r.ok) throw new Error(r.status + ' ' + path);
+      return r.json();
+    });
+  }
+
+  function renderTabs() {
+    var c = $('tabs');
+    clear(c);
+    [7, 14, 30, 90].forEach(function (d) {
+      c.appendChild(el('button', {
+        class: d === state.days ? 'active' : '',
+        onclick: function () { state.days = d; loadAll(); }
+      }, d + 'd'));
+    });
+  }
+
+  function sparkline(values) {
+    var w = 120, h = 36, pad = 2;
+    var max = Math.max.apply(null, values.concat([1]));
+    var step = values.length > 1 ? (w - 2 * pad) / (values.length - 1) : 0;
+    var pts = values.map(function (v, i) {
+      var x = pad + i * step;
+      var y = h - pad - (max === 0 ? 0 : (v / max) * (h - 2 * pad));
+      return x + ',' + y;
+    }).join(' ');
+    var svg = svgEl('svg', { viewBox: '0 0 ' + w + ' ' + h, preserveAspectRatio: 'none' });
+    if (values.length > 1) {
+      svg.appendChild(svgEl('polygon', {
+        points: pad + ',' + (h - pad) + ' ' + pts + ' ' + (pad + (values.length - 1) * step) + ',' + (h - pad),
+        fill: 'rgba(124, 108, 255, 0.18)'
+      }));
+      svg.appendChild(svgEl('polyline', { points: pts, fill: 'none', stroke: '#7c6cff', 'stroke-width': '1.5' }));
+    }
+    return svg;
+  }
+  function renderKPIs(overview, dailySeries) {
+    var totals = (overview && overview.totals) || {};
+    var spec = [
+      { label: 'Events', value: fmtNum(totals.events || 0), spark: dailySeries.events || [] },
+      { label: 'DAU', value: fmtNum(totals.dau || 0), spark: dailySeries.dau || [] },
+      { label: 'WAU', value: fmtNum(totals.wau || 0), spark: dailySeries.wau || [] },
+      { label: 'Active Projects', value: fmtNum(totals.active_projects || 0), spark: dailySeries.projects || [] }
+    ];
+    var k = $('kpis');
+    clear(k);
+    spec.forEach(function (s) {
+      var sp = el('div', { class: 'spark' });
+      if (s.spark.length) sp.appendChild(sparkline(s.spark));
+      k.appendChild(el('div', { class: 'kpi' }, [
+        el('div', { class: 'label' }, s.label),
+        el('div', { class: 'value' }, s.value),
+        sp
+      ]));
+    });
+  }
+
+  function renderFunnel(data) {
+    var stages = (data && data.stages) || [];
+    var box = $('funnel');
+    clear(box);
+    if (!stages.length) { box.appendChild(el('div', { class: 'empty' }, 'No funnel data yet')); return; }
+    var max = Math.max.apply(null, stages.map(function (s) { return s.users; }).concat([1]));
+    stages.forEach(function (s, i) {
+      var pct = (s.users / max) * 100;
+      var prev = i > 0 ? stages[i - 1].users : null;
+      var drop = prev != null && prev > 0 ? Math.round((1 - s.users / prev) * 100) : null;
+      box.appendChild(el('div', { class: 'funnel-row' }, [
+        el('div', { class: 'meta' }, [
+          el('div', { class: 'label' }, s.label || s.key),
+          el('div', { class: 'users' }, [
+            el('strong', null, fmtNum(s.users)),
+            document.createTextNode(' users')
+          ])
+        ]),
+        el('div', { class: 'funnel-track' }, el('div', { class: 'funnel-fill', style: 'width:' + pct.toFixed(1) + '%' })),
+        el('div', { class: 'funnel-drop' + (i === 0 ? ' first' : '') }, drop != null ? ('▼ ' + drop + '% drop-off') : '')
+      ]));
+    });
+  }
+
+  function bucketOf(subcmd) {
+    var s = (subcmd == null ? '' : String(subcmd));
+    for (var i = 0; i < BUCKET_ORDER.length; i++) {
+      var k = BUCKET_ORDER[i];
+      if (BUCKETS[k].test(s)) return k;
+    }
+    return 'Meta';
+  }
+  function renderCommands(data) {
+    var box = $('commands');
+    clear(box);
+    var rows = [];
+    if (Array.isArray(data)) rows = data;
+    else if (data && Array.isArray(data.commands)) rows = data.commands;
+    else if (data && Array.isArray(data.top_commands)) rows = data.top_commands;
+    else if (data && Array.isArray(data.groups)) {
+      data.groups.forEach(function (g) {
+        (g.items || []).forEach(function (it) {
+          rows.push({ command: it.command, subcommand: it.subcommand, count: it.count, bucket: g.group });
+        });
+      });
+    }
+    if (!rows.length) { box.appendChild(el('div', { class: 'empty' }, 'No commands yet')); return; }
+
+    var groups = {};
+    BUCKET_ORDER.forEach(function (b) { groups[b] = []; });
+    rows.forEach(function (r) {
+      var sub = r.subcommand != null ? r.subcommand : (r.name || '');
+      var b = r.bucket || bucketOf(sub);
+      (groups[b] = groups[b] || []).push({ name: sub || '(bare)', count: r.count || 0 });
+    });
+
+    var maxCount = 0;
+    BUCKET_ORDER.forEach(function (b) { (groups[b] || []).forEach(function (r) { if (r.count > maxCount) maxCount = r.count; }); });
+    if (maxCount === 0) maxCount = 1;
+
+    BUCKET_ORDER.forEach(function (b) {
+      var list = (groups[b] || []).sort(function (a, c) { return c.count - a.count; });
+      if (!list.length) return;
+      var total = list.reduce(function (a, r) { return a + r.count; }, 0);
+      box.appendChild(el('div', { class: 'bucket' }, [
+        el('div', { class: 'bucket-head' }, [
+          el('div', { class: 'bucket-title' }, b),
+          el('div', { class: 'bucket-count' }, fmtNum(total) + ' events')
+        ]),
+        el('div', { class: 'bar-list' }, list.map(function (r) {
+          return el('div', { class: 'bar-row' }, [
+            el('div', { class: 'name', title: r.name }, r.name),
+            el('div', { class: 'track' }, el('div', { class: 'fill', style: 'width:' + ((r.count / maxCount) * 100).toFixed(1) + '%' })),
+            el('div', { class: 'count' }, fmtNum(r.count))
+          ]);
+        }))
+      ]));
+    });
+  }
+
+  function renderAgents(rows) {
+    var box = $('agents');
+    clear(box);
+    if (!rows || !rows.length) { box.appendChild(el('div', { class: 'empty' }, 'No agent runs yet')); return; }
+    var max = Math.max.apply(null, rows.map(function (r) { return r.count; }).concat([1]));
+    var list = el('div', { class: 'bar-list' });
+    rows.slice(0, 10).forEach(function (r) {
+      list.appendChild(el('div', { class: 'bar-row' }, [
+        el('div', { class: 'name', title: r.agent }, r.agent),
+        el('div', { class: 'track' }, el('div', { class: 'fill', style: 'width:' + ((r.count / max) * 100).toFixed(1) + '%' })),
+        el('div', { class: 'count' }, fmtNum(r.count))
+      ]));
+    });
+    box.appendChild(list);
+  }
+
+  function renderToolsInit(data) {
+    var box = $('tools-init');
+    clear(box);
+    var rows = (data && data.by_step) || [];
+    if (!rows.length) { box.appendChild(el('div', { class: 'empty' }, 'No tools-init events yet')); return; }
+    rows.forEach(function (r) {
+      var total = (r.success || 0) + (r.cancelled || 0) + (r.errored || 0);
+      var pct = function (v) { return total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0%'; };
+      box.appendChild(el('div', { class: 'stack-row' }, [
+        el('div', { class: 'name' }, r.step + ' — ' + fmtNum(r.started || total) + ' started'),
+        el('div', { class: 'stack-track' }, [
+          el('div', { class: 'seg success', style: 'width:' + pct(r.success || 0), title: 'Success: ' + (r.success || 0) }),
+          el('div', { class: 'seg cancelled', style: 'width:' + pct(r.cancelled || 0), title: 'Cancelled: ' + (r.cancelled || 0) }),
+          el('div', { class: 'seg errored', style: 'width:' + pct(r.errored || 0), title: 'Errored: ' + (r.errored || 0) })
+        ]),
+        el('div', { class: 'legend' }, [
+          el('span', { class: 'lg-s' }, 'Success ' + (r.success || 0)),
+          el('span', { class: 'lg-c' }, 'Cancelled ' + (r.cancelled || 0)),
+          el('span', { class: 'lg-e' }, 'Errored ' + (r.errored || 0))
+        ])
+      ]));
+    });
+    if (data && data.median_time_to_complete_seconds != null) {
+      box.appendChild(el('div', { class: 'subtitle', style: 'margin-top:12px;margin-bottom:0' },
+        'Median time to complete: ' + Math.round(data.median_time_to_complete_seconds) + 's'));
+    }
+  }
+
+  function bucketize(v, max) {
+    if (!v || max <= 0) return 0;
+    var ratio = v / max;
+    if (ratio < 0.2) return 1;
+    if (ratio < 0.4) return 2;
+    if (ratio < 0.7) return 3;
+    return 4;
+  }
+  function renderHeatmap(data) {
+    var wrap = $('heatmap-wrap');
+    clear(wrap);
+    var users = (data && data.users) || [];
+    var days = (data && data.days) || [];
+    var matrix = (data && data.matrix) || [];
+    if (!users.length || !days.length) { wrap.appendChild(el('div', { class: 'empty' }, 'No activity yet')); return; }
+
+    var max = 0;
+    matrix.forEach(function (row) { row.forEach(function (v) { if (v > max) max = v; }); });
+
+    var labels = el('div', { class: 'heatmap-users' });
+    users.forEach(function (u) {
+      labels.appendChild(el('div', { class: 'heatmap-user-label', title: u }, u));
+    });
+
+    var grid = el('div', { class: 'heatmap' });
+    days.forEach(function (day, dayIdx) {
+      var col = el('div', { class: 'heatmap-row' });
+      users.forEach(function (u, userIdx) {
+        var v = (matrix[userIdx] || [])[dayIdx] || 0;
+        var b = bucketize(v, max);
+        col.appendChild(el('div', {
+          class: 'heatmap-cell hm-' + b,
+          title: u + ' · ' + day + ' · ' + v + ' events',
+          onclick: function () { applyFilter({ user: u, date: day }); }
+        }));
+      });
+      grid.appendChild(col);
+    });
+
+    wrap.appendChild(el('div', { class: 'heatmap-container' }, [labels, grid]));
+  }
+
+  function compareBy(key, dir) {
+    return function (a, b) {
+      var x = a[key], y = b[key];
+      if (key === 'first_seen' || key === 'last_seen') { x = x ? new Date(x).getTime() : 0; y = y ? new Date(y).getTime() : 0; }
+      if (x == null) x = '';
+      if (y == null) y = '';
+      if (Array.isArray(x)) x = x.length;
+      if (Array.isArray(y)) y = y.length;
+      if (x < y) return dir === 'asc' ? -1 : 1;
+      if (x > y) return dir === 'asc' ? 1 : -1;
+      return 0;
+    };
+  }
+  function renderUsers() {
+    var box = $('users');
+    clear(box);
+    var rows = state.rawUsers.slice();
+    if (!rows.length) { box.appendChild(el('div', { class: 'empty' }, 'No users yet')); return; }
+    rows.sort(compareBy(state.sort.key, state.sort.dir));
+
+    var cols = [
+      { key: 'user_local', label: 'User' },
+      { key: 'first_seen', label: 'First Seen' },
+      { key: 'last_seen', label: 'Last Seen' },
+      { key: 'days_active', label: 'Days Active' },
+      { key: 'events', label: 'Events' },
+      { key: 'commands_tried', label: 'Commands' },
+      { key: 'agents_run', label: 'Agents' }
+    ];
+    var thead = el('thead', null, el('tr', null, cols.map(function (c) {
+      return el('th', {
+        class: c.key === state.sort.key ? 'sorted' : '',
+        onclick: function () {
+          if (state.sort.key === c.key) state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+          else { state.sort.key = c.key; state.sort.dir = 'desc'; }
+          renderUsers();
+        }
+      }, c.label);
+    })));
+    var tbody = el('tbody');
+    rows.forEach(function (u) {
+      var cmdChips = (u.commands_tried || []).map(function (c) { return el('span', { class: 'chip' }, c); });
+      var agentChips = (u.agents_run || []).map(function (a) { return el('span', { class: 'chip muted' }, a); });
+      tbody.appendChild(el('tr', null, [
+        el('td', { class: 'user' }, u.user_local || ''),
+        el('td', { class: 'dim' }, fmtDate(u.first_seen)),
+        el('td', { class: 'dim' }, fmtDate(u.last_seen)),
+        el('td', null, String(u.days_active || 0)),
+        el('td', null, fmtNum(u.events || 0)),
+        el('td', { class: 'chips' }, cmdChips.length ? cmdChips : [document.createTextNode('—')]),
+        el('td', { class: 'chips' }, agentChips.length ? agentChips : [document.createTextNode('—')])
+      ]));
+    });
+    box.appendChild(el('table', null, [thead, tbody]));
+  }
+
+  function renderRecent() {
+    var box = $('recent');
+    clear(box);
+    var rows = state.rawRecent.slice();
+    if (state.filter) {
+      rows = rows.filter(function (r) {
+        if (state.filter.user && r.user_local !== state.filter.user) return false;
+        if (state.filter.date) {
+          var iso = new Date(r.ts).toISOString().slice(0, 10);
+          if (iso !== state.filter.date) return false;
+        }
+        return true;
+      });
+    }
+    if (!rows.length) { box.appendChild(el('div', { class: 'empty' }, 'No recent events')); return; }
+    rows.forEach(function (r) {
+      var chips = [];
+      if (r.command) chips.push(el('span', { class: 'chip' }, r.command + (r.subcommand ? ' · ' + r.subcommand : '')));
+      box.appendChild(el('div', { class: 'feed-row' }, [
+        el('div', { class: 'when' }, timeAgo(r.ts)),
+        el('div', { class: 'who', title: r.user_local || '' }, r.user_local || '—'),
+        el('div', { class: 'where', title: r.project || '' }, r.project || '—'),
+        el('div', { class: 'what' }, [el('span', { class: 'ev' }, r.event_type || '')].concat(chips))
+      ]));
+    });
+  }
+
+  function applyFilter(f) {
+    state.filter = f;
+    var banner = $('filter-banner');
+    if (f) {
+      $('filter-text').textContent = 'Filtering activity by ' + (f.user || '') + (f.date ? ' on ' + f.date : '');
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+    }
+    renderRecent();
+  }
+  $('filter-clear').addEventListener('click', function () { applyFilter(null); });
+
+  function deriveDailySeries(recent, days) {
+    var n = Math.min(days, 30);
+    var buckets = [];
+    for (var i = 0; i < n; i++) buckets.push({ events: 0, users: {}, projects: {} });
+    var now = Date.now();
+    recent.forEach(function (e) {
+      var diff = Math.floor((now - new Date(e.ts).getTime()) / 86400000);
+      if (diff < 0 || diff >= n) return;
+      var idx = n - 1 - diff;
+      buckets[idx].events++;
+      if (e.user_local) buckets[idx].users[e.user_local] = 1;
+      if (e.project) buckets[idx].projects[e.project] = 1;
+    });
+    return {
+      events: buckets.map(function (b) { return b.events; }),
+      dau: buckets.map(function (b) { return Object.keys(b.users).length; }),
+      wau: buckets.map(function (b) { return Object.keys(b.users).length; }),
+      projects: buckets.map(function (b) { return Object.keys(b.projects).length; })
+    };
+  }
+
+  function safeFetch(path) {
+    return fetchJson(path).catch(function (err) { console.warn(path, err.message); return null; });
+  }
+  function loadAll() {
+    renderTabs();
+    var d = state.days;
+    Promise.all([
+      safeFetch('/api/overview?days=' + d),
+      safeFetch('/api/funnel?days=' + d),
+      safeFetch('/api/commands?days=' + d + '&group=true'),
+      safeFetch('/api/tools_init?days=' + d),
+      safeFetch('/api/heatmap?days=' + d),
+      safeFetch('/api/users?days=' + d),
+      safeFetch('/api/recent?limit=50')
+    ]).then(function (results) {
+      var overview = results[0] || { totals: {}, top_agents: [], top_commands: [] };
+      var funnel = results[1] || { stages: [] };
+      var commands = results[2] || { commands: overview.top_commands || [] };
+      var toolsInit = results[3] || { by_step: [] };
+      var heatmap = results[4] || { users: [], days: [], matrix: [] };
+      var users = results[5] || { users: [] };
+      var recent = results[6] || { events: [] };
+
+      state.rawRecent = recent.events || [];
+      state.rawUsers = users.users || [];
+
+      var dailySeries = deriveDailySeries(state.rawRecent, d);
+      renderKPIs(overview, dailySeries);
+      renderFunnel(funnel);
+      renderCommands(commands);
+      renderAgents(overview.top_agents || []);
+      renderToolsInit(toolsInit);
+      renderHeatmap(heatmap);
+      renderUsers();
+      renderRecent();
+    });
+  }
+
+  $('feedback-link').href = '/feedback' + (state.token ? '?token=' + encodeURIComponent(state.token) : '');
+  loadAll();
+})();
+</script>
+</body>
+</html>

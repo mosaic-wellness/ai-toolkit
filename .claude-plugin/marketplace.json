@@ -18,10 +18,10 @@
       "source": "./plugins/kai-dev"
     },
     {
-      "name": "mosaic-buddy",
-      "description": "Technical co-pilot for non-engineering teams — health checks, stack review, UX audits, brainstorming, documentation, debugging, and weekly coaching.",
-      "version": "3.7.0",
-      "source": "./plugins/mosaic-buddy"
+      "name": "kai",
+      "description": "Mosaic Wellness internal-tooling co-pilot — wires Mixpanel, Firebase, New Relic, and the Kai orchestrator MCPs with brand-aware skills, and ships an interactive tools-init wizard that provisions credentials durably to ~/.config/kai/tokens.env. Run /kai migrate if you're coming from the retired mosaic-buddy plugin.",
+      "version": "1.1.0",
+      "source": "./plugins/kai"
     }
   ]
 }

@@ -1,5 +1,19 @@
 # Mosaic Buddy
 
+> ## ⚠️ Retired — install [`kai`](../kai/) instead
+>
+> `mosaic-buddy` is no longer published in the marketplace. Everything it did lives in `kai`, plus the new Mosaic MCP wiring (Mixpanel / Firebase / New Relic / Kai orchestrator) and the `tools-init` setup wizard.
+>
+> **If you're already on `mosaic-buddy`:**
+>
+> 1. `/plugin install kai`
+> 2. `/kai migrate` — copies your tokens to `~/.config/kai/tokens.env` and prints the command-mapping table
+> 3. `/plugin uninstall mosaic-buddy`
+>
+> The folder remains here for archival reference; everything below describes the retired plugin's original behavior.
+
+---
+
 **Your project's technical co-pilot.** Built for the people at Mosaic who build internal tools with Claude Code — PMs, ops, revenue, growth. You don't need to be an engineer. You just need to type `/mosaic-buddy`.
 
 ---

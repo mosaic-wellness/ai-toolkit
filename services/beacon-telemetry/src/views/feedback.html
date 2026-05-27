@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kai Feedback</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #0d0e12; color: #e7e8ee; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  a { color: #7c6cff; text-decoration: none; }
+  a:hover { color: #a397ff; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 40px 64px; }
+
+  .header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+  .header .sub { color: #9b9eaa; font-size: 13px; margin-top: 4px; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .tabs { display: inline-flex; gap: 4px; background: #16181e; border: 1px solid #22242c; padding: 4px; border-radius: 8px; }
+  .tabs button { background: transparent; border: 0; color: #9b9eaa; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .tabs button:hover { color: #e7e8ee; }
+  .tabs button.active { background: #7c6cff; color: #fff; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .kpi { background: #16181e; border: 1px solid #22242c; border-radius: 12px; padding: 20px; }
+  .kpi .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9b9eaa; font-weight: 600; }
+  .kpi .value { font-size: 30px; font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-top: 6px; }
+
+  .card { background: #16181e; border: 1px solid #22242c; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 11px; font-weight: 600; color: #9b9eaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+
+  .item { background: #1a1c22; border: 1px solid #22242c; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+  .item:last-child { margin-bottom: 0; }
+  .item-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .rating { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; line-height: 1.4; }
+  .r-4 { background: rgba(95, 212, 154, 0.18); color: #5fd49a; }
+  .r-3 { background: rgba(180, 230, 110, 0.18); color: #b4e66e; }
+  .r-2 { background: rgba(245, 176, 106, 0.18); color: #f5b06a; }
+  .r-1 { background: rgba(255, 126, 109, 0.18); color: #ff7e6d; }
+  .item-meta { font-size: 12px; color: #9b9eaa; display: flex; gap: 12px; flex-wrap: wrap; }
+  .item-meta .dot { color: #3a3d48; }
+  .item-time { margin-left: auto; color: #6b6e7a; font-size: 12px; }
+  .item-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .item-desc { font-size: 13px; color: #c9cad2; line-height: 1.55; white-space: pre-wrap; }
+
+  .empty { color: #6b6e7a; font-size: 13px; padding: 32px 0; text-align: center; }
+
+  @media (max-width: 700px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .wrap { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1>Kai Feedback</h1>
+      <div class="sub">What teammates are telling us about kai</div>
+    </div>
+    <div class="header-right">
+      <div class="tabs" id="tabs"></div>
+      <a id="dashboard-link" href="#">&larr; Back to telemetry</a>
+    </div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="card">
+    <h2>Recent Feedback</h2>
+    <div id="recent"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var RATING_LABEL = { 4: 'Loved it', 3: 'Liked it', 2: 'Meh', 1: 'Frustrated' };
+
+  var state = {
+    days: 90,
+    token: new URLSearchParams(window.location.search).get('token') || '',
+    items: []
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    }
+    if (kids != null) {
+      if (Array.isArray(kids)) kids.forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+      else if (typeof kids === 'string') e.textContent = kids;
+      else e.appendChild(kids);
+    }
+    return e;
+  }
+  function tokenQS() {
+    var p = new URLSearchParams();
+    if (state.token) p.set('token', state.token);
+    return p.toString();
+  }
+  function timeAgo(ts) {
+    var s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return Math.floor(s / 86400) + 'd ago';
+  }
+
+  function fetchJson(path) {
+    var sep = path.indexOf('?') === -1 ? '?' : '&';
+    return fetch(path + sep + tokenQS()).then(function (r) {
+      if (!r.ok) throw new Error(r.status + ' ' + path);
+      return r.json();
+    });
+  }
+
+  function renderTabs() {
+    var c = $('tabs');
+    clear(c);
+    [7, 30, 90, 365].forEach(function (d) {
+      c.appendChild(el('button', {
+        class: d === state.days ? 'active' : '',
+        onclick: function () { state.days = d; load(); }
+      }, d + 'd'));
+    });
+  }
+
+  function renderSummary(items) {
+    var box = $('summary');
+    clear(box);
+    var total = items.length;
+    var byRating = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    var sum = 0;
+    var projects = {};
+    items.forEach(function (r) {
+      if (byRating[r.rating] != null) byRating[r.rating]++;
+      sum += (r.rating || 0);
+      if (r.project) projects[r.project] = 1;
+    });
+    var avg = total ? (sum / total).toFixed(2) : '–';
+    var positive = byRating[4] + byRating[3];
+    var negative = byRating[1] + byRating[2];
+
+    [
+      ['Total', String(total)],
+      ['Avg Rating', total ? (avg + ' / 4') : '–'],
+      ['Positive', total ? (positive + ' (' + Math.round(100 * positive / total) + '%)') : '–'],
+      ['Negative', total ? (negative + ' (' + Math.round(100 * negative / total) + '%)') : '–']
+    ].forEach(function (pair) {
+      box.appendChild(el('div', { class: 'kpi' }, [
+        el('div', { class: 'label' }, pair[0]),
+        el('div', { class: 'value' }, pair[1])
+      ]));
+    });
+  }
+
+  function renderItems(items) {
+    var box = $('recent');
+    clear(box);
+    if (!items.length) { box.appendChild(el('div', { class: 'empty' }, 'No feedback yet')); return; }
+    items.forEach(function (r) {
+      var rating = el('span', { class: 'rating r-' + (r.rating || 1) }, RATING_LABEL[r.rating] || ('Rating ' + r.rating));
+      var meta = el('div', { class: 'item-meta' }, [
+        el('span', null, r.user_local || r.user_email || 'unknown'),
+        el('span', { class: 'dot' }, '·'),
+        el('span', null, r.project || r.project_name || 'unknown')
+      ]);
+      var time = el('span', { class: 'item-time' }, r.ts ? timeAgo(r.ts) : '');
+      box.appendChild(el('div', { class: 'item' }, [
+        el('div', { class: 'item-head' }, [rating, meta, time]),
+        el('div', { class: 'item-title' }, r.title || '(no title)'),
+        el('div', { class: 'item-desc' }, r.description || '')
+      ]));
+    });
+  }
+
+  function load() {
+    renderTabs();
+    // Per spec section 5: /feedback/recent. /feedback/stats not in v2 spec yet —
+    // we compute KPI summary client-side from the recent payload.
+    fetchJson('/feedback/recent?limit=100').then(function (data) {
+      var items = (data && (data.feedback || data.recent || data.items)) || (Array.isArray(data) ? data : []);
+      state.items = items;
+      var windowMs = state.days * 86400000;
+      var filtered = items.filter(function (r) {
+        if (!r.ts) return true;
+        return (Date.now() - new Date(r.ts).getTime()) <= windowMs;
+      });
+      renderSummary(filtered);
+      renderItems(filtered);
+    }).catch(function (err) {
+      console.warn(err.message);
+      renderSummary([]);
+      var box = $('recent');
+      clear(box);
+      box.appendChild(el('div', { class: 'empty' },
+        err.message.indexOf('401') !== -1
+          ? 'Unauthorized. Add ?token=YOUR_ADMIN_TOKEN to the URL.'
+          : 'No feedback yet'));
+    });
+  }
+
+  $('dashboard-link').href = '/' + (state.token ? '?token=' + encodeURIComponent(state.token) : '');
+  load();
+})();
+</script>
+</body>
+</html>
