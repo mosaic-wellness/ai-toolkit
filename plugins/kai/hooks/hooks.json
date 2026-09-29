@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Block if file contains hardcoded API keys or secrets (sk-ant-*, sk-*, amk_*, OPENAI_API_KEY=sk-*, GEMINI_API_KEY=*, ELEVENLABS_API_KEY=*, NRAK-* / NEW_RELIC_API_KEY=NRAK-* (New Relic), NRII-* (New Relic ingest), MIXPANEL_SERVICE_ACCOUNT_TOKEN=<long-hex>, Bearer tokens with sk-*, or tokens in URLs like ?token= or ?api_key=). Warn: 'Use environment variables (e.g. ${NEW_RELIC_API_KEY}) instead — see ${CLAUDE_PLUGIN_ROOT}/skills/tools-init/SKILL.md for the persistent-credentials flow.'"
+            "prompt": "Block ONLY when the file contains a literal secret VALUE: a token such as sk-ant-api03-<chars>, sk-<20+ chars>, amk_<chars>, NRAK-<chars>, NRII-<chars>, or an assignment whose right-hand side is a real literal of 20 or more characters (for example OPENAI_API_KEY, GEMINI_API_KEY, ELEVENLABS_API_KEY, NEW_RELIC_API_KEY, MIXPANEL_SERVICE_ACCOUNT_TOKEN), or a Bearer token or a URL carrying ?token= or ?api_key= with a literal value. Do NOT block a file that merely NAMES or REFERENCES a secret: GitHub Actions ${{ secrets.NAME }} expressions, env: blocks and environment-variable references such as $NAME or ${NAME}, code that reads a credential at runtime or sources an env file, documentation, runbooks, PR descriptions and comments listing secret names, and placeholders such as <redacted>, <your-key>, xxx or YOUR_KEY_HERE. When you do block, warn: 'Use environment variables (e.g. ${NEW_RELIC_API_KEY}) instead — see ${CLAUDE_PLUGIN_ROOT}/skills/tools-init/SKILL.md for the persistent-credentials flow.'"
+
           }
         ]
       },
