@@ -64,7 +64,7 @@ Some brands have non-standard bucket names that don't follow the `{prefix}-{type
 | `lj-sa` | `https://stg-sa.ourlittlejoys.com` | `https://sa.ourlittlejoys.com` |
 | `lj-us` | `https://stg.littlejoys.us` | `https://littlejoys.us` |
 | `rl-in` | `https://stg.rootlabs.in` | `https://rootlabs.in` |
-| `rl-us` | `https://stg.rootlabs.co` | `https://rootlabs.co` |
+| `rl-us` | `https://stg.rootlabshealth.com` | `https://rootlabshealth.com` |
 | `wn-in` | `https://stg.onlywhatsneeded.in` | `https://onlywhatsneeded.in` |
 | `as-in` | `https://stg.absolutescience.in` | `https://absolutescience.in` |
 | `fw` | — (no preview URL) | — |

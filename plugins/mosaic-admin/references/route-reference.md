@@ -40,14 +40,14 @@ Maps URLs to admin-mcp page types and tools.
 | `stg-sa.ourlittlejoys.com`, `sa.ourlittlejoys.com` | `lj-sa` | `https://stg-sa.ourlittlejoys.com` |
 | `*.littlejoys.us`, `stg.littlejoys.us` | `lj-us` | `https://stg.littlejoys.us` |
 | `*.rootlabs.in`, `stg.rootlabs.in` | `rl-in` | `https://stg.rootlabs.in` |
-| `*.rootlabs.co`, `stg.rootlabs.co` | `rl-us` | `https://stg.rootlabs.co` |
+| `*.rootlabshealth.com`, `stg.rootlabshealth.com` | `rl-us` | `https://stg.rootlabshealth.com` |
 | `*.onlywhatsneeded.in`, `stg.onlywhatsneeded.in` | `wn-in` | `https://stg.onlywhatsneeded.in` |
 | `*.absolutescience.in`, `stg.absolutescience.in` | `as-in` | `https://stg.absolutescience.in` |
 
 **Notes:**
 - `lj-sa` uses a non-standard staging pattern: `stg-sa.ourlittlejoys.com` (not `stg.`)
 - `lj-us` uses `littlejoys.us` domain (not `ourlittlejoys.us`)
-- `rl-us` uses `rootlabs.co` domain
+- `rl-us` uses `rootlabshealth.com` domain
 - `fw` brand has no preview URLs configured
 
 ---

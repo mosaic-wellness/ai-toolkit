@@ -33,11 +33,11 @@ You are working with the **admin-mcp** MCP server — a staging-only tool for ma
 | `stg-sa.ourlittlejoys.com` | `lj-sa` |
 | `*.littlejoys.us` | `lj-us` |
 | `*.rootlabs.in` | `rl-in` |
-| `*.rootlabs.co` | `rl-us` |
+| `*.rootlabshealth.com` | `rl-us` |
 | `*.onlywhatsneeded.in` | `wn-in` |
 | `*.absolutescience.in` | `as-in` |
 
-**Gotchas:** `lj-sa` uses `stg-sa.` prefix (not `stg.`). `lj-us` uses `littlejoys.us`. `rl-us` uses `rootlabs.co`. `fw` is pagedata-only (no products bucket).
+**Gotchas:** `lj-sa` uses `stg-sa.` prefix (not `stg.`). `lj-us` uses `littlejoys.us`. `rl-us` uses `rootlabshealth.com`. `fw` is pagedata-only (no products bucket).
 
 ## URL → Page Type → Tool Mapping
 
